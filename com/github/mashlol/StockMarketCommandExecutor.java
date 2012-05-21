@@ -1,5 +1,7 @@
 package com.github.mashlol;
 
+import java.sql.SQLException;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -48,11 +50,21 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 			} else if (args.length >= 2 && args[0].equalsIgnoreCase("list") && args[1].equalsIgnoreCase("mine") && player != null && StockMarket.permission.has(player, "stockmarket.user.list")) {
 				// LIST ALL THE STOCKS THIS PLAYER OWNS
 				PlayerStocks ps = new PlayerStocks(player);
-				ps.listMine();
+				try {
+					ps.listMine();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			} else if (args.length >= 2 && args[0].equalsIgnoreCase("list") && args[1].equalsIgnoreCase("history") && player != null && StockMarket.permission.has(player, "stockmarket.user.list")) {
 				// LIST STOCK BUY/SELL HISTORY FOR PLAYER
 				PlayerStocks ps = new PlayerStocks(player);
-				ps.listHistory();
+				try {
+					ps.listHistory();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			} else if (args.length >= 1 && args[0].equalsIgnoreCase("list") && (player == null || StockMarket.permission.has(player, "stockmarket.user.list"))) {
 				// LIST ALL THE STOCKS THIS PLAYER CAN BUY
 				PlayerStocks ps = new PlayerStocks(player);

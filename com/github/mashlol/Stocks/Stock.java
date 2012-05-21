@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.Random;
 
 import com.github.mashlol.MySQL;
@@ -150,6 +151,7 @@ public class Stock {
 		if (getPrice() + amount > getMaxPrice()) {
 			stmt = mysql.prepareStatement("UPDATE stocks SET price = ? WHERE stockID = ?");
 			try {
+				amount = getMaxPrice();
 				stmt.setDouble(1, getMaxPrice());
 				stmt.setString(2, getID());
 			} catch (SQLException e) {
@@ -158,6 +160,7 @@ public class Stock {
 		} else if (getPrice() + amount < getMinPrice()) {
 			stmt = mysql.prepareStatement("UPDATE stocks SET price = ? WHERE stockID = ?");
 			try {
+				amount = getMinPrice();
 				stmt.setDouble(1, getMinPrice());
 				stmt.setString(2, getID());
 			} catch (SQLException e) {
@@ -171,6 +174,19 @@ public class Stock {
 			} catch (SQLException e) {
 				
 			}
+		}
+		
+		// RECORD THE PRICE CHANGE
+		stmt = mysql.prepareStatement("INSERT INTO stock_history (stockID, price, date_created) VALUES (?, ?, ?)");
+		try {
+			java.util.Date date= new java.util.Date();
+	        String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
+	        stmt.setString(1, getID());
+			stmt.setDouble(2, getPrice()+amount);
+			stmt.setString(3, ts);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
 		}
 		
 		

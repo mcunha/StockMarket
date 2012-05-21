@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import com.github.mashlol.MySQL;
@@ -130,6 +131,8 @@ public class PlayerStocks {
 					return false;
 				}
 				
+				mysql.execute(stmt);
+				
 				// UPDATE AMOUNT IF NOT INFINITE
 				if (stock.getAmount() != -1) {
 					stmt = mysql.prepareStatement("UPDATE stocks SET amount = amount + ? WHERE StockID LIKE ?");
@@ -245,10 +248,10 @@ public class PlayerStocks {
 		
 		m.successMessage("List of stocks:");
 		for (PlayerStock ps : stock.values())
-			m.regularMessage(ps.stock.getID() + " - Current Amount: " + ps.stock.getAmount() + " - Price: " + newFormat.format(ps.stock.getPrice()) + " " + StockMarket.economy.currencyNamePlural());
+			m.regularMessage(ps.stock.getID() + " - Qty: " + ps.stock.getAmount() + " -  $" + ChatColor.AQUA + newFormat.format(ps.stock.getPrice()));
 	}
 	
-	public void listMine () {
+	public void listMine () throws SQLException {
 		Message m = new Message(player);
 		DecimalFormat newFormat = new DecimalFormat("#.##");
 		
@@ -257,14 +260,40 @@ public class PlayerStocks {
 			return;
 		}
 		
-		m.successMessage("List of your stocks:");
+		m.successMessage("List of your stocks (estimated returns):");
 		for (PlayerStock ps : stock.values())
-			if (ps.amount > 0)
-				m.regularMessage(ps.stock.getID() + " - Amount: " + ps.amount + " - Price: " + newFormat.format(ps.stock.getPrice()) + " " + StockMarket.economy.currencyNamePlural());
+			if (ps.amount > 0){
+				
+				DecimalFormat diffFormat = new DecimalFormat("#.####");
+				double purch_price = ps.getPurchasePrice(player);
+				
+				double stock_diff = (ps.stock.getPrice() - purch_price);
+				String diff = diffFormat.format( stock_diff );
+				double returns_price = stock_diff * ps.amount;
+				String returns = diffFormat.format(returns_price);
+				
+				ChatColor stock_diff_color = ChatColor.RED;
+				if(stock_diff > 0){
+					stock_diff_color = ChatColor.GREEN;
+				}
+				
+				ChatColor returns_color = ChatColor.RED;
+				if(returns_price > 0){
+					returns_color = ChatColor.GREEN;
+				}
+				
+				String chat_msg = ps.stock.getID();
+				chat_msg += " $" + ChatColor.AQUA + newFormat.format(ps.stock.getPrice()) + ChatColor.WHITE;
+				chat_msg += ". Paid $" + ChatColor.GRAY + purch_price + ChatColor.WHITE + " for " + ps.amount;
+				chat_msg += " [" + stock_diff_color + diff + ChatColor.WHITE + "]";
+				chat_msg += " Rtrn: $" + returns_color + returns + ChatColor.WHITE;
+				
+				m.regularMessage( chat_msg );
+			}
 	}
 	
 	
-	public void listHistory () {
+	public void listHistory () throws SQLException {
 		Message m = new Message(player);
 		DecimalFormat newFormat = new DecimalFormat("#.##");
 		
@@ -273,9 +302,10 @@ public class PlayerStocks {
 		// WE FOUND IT, STORE SOME INFO
 		MySQL mysql = new MySQL();
 		
-		PreparedStatement stmt = mysql.prepareStatement("SELECT * FROM player_stock_transactions ORDER BY id");
-		ResultSet result = mysql.query(stmt);
+		PreparedStatement stmt = mysql.prepareStatement("SELECT * FROM player_stock_transactions WHERE player = ? ORDER BY id");
 		try {
+			stmt.setString(1, player.getName());
+			ResultSet result = mysql.query(stmt);
 			while (result.next()) {
 				m.regularMessage( "("+result.getString("trxn_type")+") " + result.getInt("amount") + " " + result.getString("stockID") + " at " + newFormat.format(result.getDouble("price")) );
 			}
