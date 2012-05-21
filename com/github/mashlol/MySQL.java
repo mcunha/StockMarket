@@ -51,7 +51,8 @@ public class MySQL {
 		try {
 			execute("CREATE TABLE IF NOT EXISTS stocks (id int NOT NULL AUTO_INCREMENT, PRIMARY KEY(id), name tinytext, stockID tinytext, price decimal(10, 2), basePrice decimal(10, 2), maxPrice decimal(10, 2), minPrice decimal(10, 2), volatility decimal(10, 2), amount int, dividend decimal(10, 2))");
 			execute("CREATE TABLE IF NOT EXISTS players (id int NOT NULL AUTO_INCREMENT, PRIMARY KEY(id), name tinytext)");
-			execute("CREATE TABLE IF NOT EXISTS looptime (looptime int NOT NULL DEFAULT 0, PRIMARY KEY(looptime), looptime2 int NOT NULL DEFAULT 0)");	
+			execute("CREATE TABLE IF NOT EXISTS looptime (looptime int NOT NULL DEFAULT 0, PRIMARY KEY(looptime), looptime2 int NOT NULL DEFAULT 0)");
+			execute("CREATE TABLE IF NOT EXISTS `player_stock_transactions` (`id` int(11) unsigned NOT NULL auto_increment,`player` tinytext NOT NULL,`stockID` tinytext NOT NULL,`trxn_type` enum('Buy','Sell') NOT NULL,`price` decimal(10,2) NOT NULL,`amount` int(11) NOT NULL, PRIMARY KEY  (`id`)) ENGINE=MyISAM  DEFAULT CHARSET=latin1 ;");	
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

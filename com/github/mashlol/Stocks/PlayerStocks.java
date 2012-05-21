@@ -105,7 +105,7 @@ public class PlayerStocks {
 				// OKAY THEY DO, LETS SELL EM
 				this.stock.get(stock.getID()).amount -= amount;
 				
-				// OK NOW LETS UPADTE THE DATABASE
+				// OK NOW LETS UPDATE THE DATABASE
 				MySQL mysql = new MySQL();
 				PreparedStatement stmt = mysql.prepareStatement("UPDATE players SET " + stock.getID() + " = ? WHERE name LIKE ?");
 				try {
@@ -117,6 +117,18 @@ public class PlayerStocks {
 				}
 				
 				mysql.execute(stmt);
+				
+				// STORE THE SELL PRICE TRANSACTION
+				stmt = mysql.prepareStatement("INSERT INTO player_stock_transactions (player, stockID, trxn_type, price, amount) VALUES (?, ?, 'Sell', ?, ?)");
+				try {
+					stmt.setString(1, player.getName());
+					stmt.setString(2, stock.getID());
+					stmt.setDouble(3, stock.getPrice());
+					stmt.setInt(4, this.stock.get(stock.getID()).amount);
+				} catch (SQLException e) {
+					e.printStackTrace();
+					return false;
+				}
 				
 				// UPDATE AMOUNT IF NOT INFINITE
 				if (stock.getAmount() != -1) {
@@ -171,12 +183,26 @@ public class PlayerStocks {
 				// OKAY THEY DO, LETS BUY EM
 				this.stock.get(stock.getID()).amount += amount;
 				
-				// OK NOW LETS UPADTE THE DATABASE
+				// OK NOW LETS UPDATE THE DATABASE
 				MySQL mysql = new MySQL();
 				PreparedStatement stmt = mysql.prepareStatement("UPDATE players SET " + stock.getID() + " = ? WHERE name LIKE ?");
 				try {
 					stmt.setInt(1, this.stock.get(stock.getID()).amount);
 					stmt.setString(2, player.getName());
+				} catch (SQLException e) {
+					e.printStackTrace();
+					return false;
+				}
+				
+				mysql.execute(stmt);
+				
+				// STORE THE BUY PRICE TRANSACTION
+				stmt = mysql.prepareStatement("INSERT INTO player_stock_transactions (player, stockID, trxn_type, price, amount) VALUES (?, ?, 'Buy', ?, ?)");
+				try {
+					stmt.setString(1, player.getName());
+					stmt.setString(2, stock.getID());
+					stmt.setDouble(3, stock.getPrice());
+					stmt.setInt(4, this.stock.get(stock.getID()).amount);
 				} catch (SQLException e) {
 					e.printStackTrace();
 					return false;
@@ -235,6 +261,30 @@ public class PlayerStocks {
 		for (PlayerStock ps : stock.values())
 			if (ps.amount > 0)
 				m.regularMessage(ps.stock.getID() + " - Amount: " + ps.amount + " - Price: " + newFormat.format(ps.stock.getPrice()) + " " + StockMarket.economy.currencyNamePlural());
+	}
+	
+	
+	public void listHistory () {
+		Message m = new Message(player);
+		DecimalFormat newFormat = new DecimalFormat("#.##");
+		
+		m.successMessage("Stock transaction history:");
+		
+		// WE FOUND IT, STORE SOME INFO
+		MySQL mysql = new MySQL();
+		
+		PreparedStatement stmt = mysql.prepareStatement("SELECT * FROM player_stock_transactions ORDER BY id");
+		ResultSet result = mysql.query(stmt);
+		try {
+			while (result.next()) {
+				m.regularMessage( "("+result.getString("trxn_type")+") " + result.getInt("amount") + " " + result.getString("stockID") + " at " + newFormat.format(result.getDouble("price")) );
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		mysql.close();
+
 	}
 	
 	public boolean payoutDividends () {

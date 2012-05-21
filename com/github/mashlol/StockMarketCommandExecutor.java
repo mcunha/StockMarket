@@ -49,6 +49,10 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 				// LIST ALL THE STOCKS THIS PLAYER OWNS
 				PlayerStocks ps = new PlayerStocks(player);
 				ps.listMine();
+			} else if (args.length >= 2 && args[0].equalsIgnoreCase("list") && args[1].equalsIgnoreCase("history") && player != null && StockMarket.permission.has(player, "stockmarket.user.list")) {
+				// LIST STOCK BUY/SELL HISTORY FOR PLAYER
+				PlayerStocks ps = new PlayerStocks(player);
+				ps.listHistory();
 			} else if (args.length >= 1 && args[0].equalsIgnoreCase("list") && (player == null || StockMarket.permission.has(player, "stockmarket.user.list"))) {
 				// LIST ALL THE STOCKS THIS PLAYER CAN BUY
 				PlayerStocks ps = new PlayerStocks(player);
