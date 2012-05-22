@@ -120,18 +120,63 @@ public class PlayerStocks {
 				mysql.execute(stmt);
 				
 				// STORE THE SELL PRICE TRANSACTION
-				stmt = mysql.prepareStatement("INSERT INTO player_stock_transactions (player, stockID, trxn_type, price, amount) VALUES (?, ?, 'Sell', ?, ?)");
+				stmt = mysql.prepareStatement("INSERT INTO player_stock_transactions (player, stockID, trxn_type, price, amount, amount_sold) VALUES (?, ?, 'Sell', ?, ?, 0)");
 				try {
 					stmt.setString(1, player.getName());
 					stmt.setString(2, stock.getID());
 					stmt.setDouble(3, stock.getPrice());
-					stmt.setInt(4, this.stock.get(stock.getID()).amount);
+					stmt.setInt(4, amount);
 				} catch (SQLException e) {
 					e.printStackTrace();
 					return false;
 				}
 				
 				mysql.execute(stmt);
+				
+				// DETERMINE WHICH STOCKS ARE BEING SOLD, UPDATE THE AMOUNT_SOLD
+				
+				int amount_selling = amount;
+
+				stmt = mysql.prepareStatement("SELECT *, amount - amount_sold as diff FROM player_stock_transactions WHERE player = ? AND amount_sold < amount AND trxn_type = 'Buy' ORDER BY id");
+				try {
+					stmt.setString(1, player.getName());
+					ResultSet result = mysql.query(stmt);
+					while (result.next()) {
+						
+						int sold_this_round = 0;
+						
+						if(amount_selling > 0){
+						
+							// if we're selling less than the stock amount for the current buy trxn
+							if(amount_selling <= result.getInt("diff")){
+								sold_this_round = amount_selling;
+							} else {
+								// otherwise, we're selling more but can't exceed the diff at this point
+								sold_this_round = result.getInt("diff");
+							}
+							
+							System.out.println("[STOCK DEBUG] Selling total " + amount_selling + " - ID: " + result.getInt("id") + " Diff " + result.getInt("diff") + " sold this round: " + sold_this_round);
+							
+							// reduce the total amount selling by what was sold this round
+							amount_selling -= sold_this_round;
+							
+							// set amount_sold for these purchases
+							stmt = mysql.prepareStatement("UPDATE player_stock_transactions SET amount_sold = amount_sold + ? WHERE id = ?");
+							try {
+								stmt.setInt(1, sold_this_round);
+								stmt.setInt(2, result.getInt("id"));
+								mysql.execute(stmt);
+							} catch (SQLException e) {
+								e.printStackTrace();
+								return false;
+							}
+						}
+					}
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+				
+				
 				
 				// UPDATE AMOUNT IF NOT INFINITE
 				if (stock.getAmount() != -1) {
@@ -200,12 +245,12 @@ public class PlayerStocks {
 				mysql.execute(stmt);
 				
 				// STORE THE BUY PRICE TRANSACTION
-				stmt = mysql.prepareStatement("INSERT INTO player_stock_transactions (player, stockID, trxn_type, price, amount) VALUES (?, ?, 'Buy', ?, ?)");
+				stmt = mysql.prepareStatement("INSERT INTO player_stock_transactions (player, stockID, trxn_type, price, amount, amount_sold) VALUES (?, ?, 'Buy', ?, ?, 0)");
 				try {
 					stmt.setString(1, player.getName());
 					stmt.setString(2, stock.getID());
 					stmt.setDouble(3, stock.getPrice());
-					stmt.setInt(4, this.stock.get(stock.getID()).amount);
+					stmt.setInt(4, amount);
 				} catch (SQLException e) {
 					e.printStackTrace();
 					return false;
@@ -248,7 +293,7 @@ public class PlayerStocks {
 		
 		m.successMessage("List of stocks:");
 		for (PlayerStock ps : stock.values())
-			m.regularMessage(ps.stock.getID() + " - Qty: " + ps.stock.getAmount() + " -  $" + ChatColor.AQUA + newFormat.format(ps.stock.getPrice()));
+			m.regularMessage(ps.stock.getID() + " - $" + ChatColor.AQUA + newFormat.format(ps.stock.getPrice()) + ChatColor.WHITE + " - Qty: " + ps.stock.getAmount() + ChatColor.WHITE + " - " + ps.stock.getName());
 	}
 	
 	public void listMine () throws SQLException {

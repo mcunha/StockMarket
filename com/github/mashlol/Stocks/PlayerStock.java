@@ -20,7 +20,7 @@ public class PlayerStock {
 		
 		MySQL mysql = new MySQL();
 		
-		PreparedStatement stmt = mysql.prepareStatement("SELECT price FROM player_stock_transactions WHERE stockID = ? AND player = ? ORDER BY id DESC LIMIT 1");
+		PreparedStatement stmt = mysql.prepareStatement("SELECT price FROM player_stock_transactions WHERE stockID = ? AND player = ? AND trxn_type = 'Buy' ORDER BY id DESC LIMIT 1");
 		try {
 			stmt.setString(1, this.stock.getID());
 			stmt.setString(2, player.getName());

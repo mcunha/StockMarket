@@ -147,20 +147,20 @@ public class Stock {
 		DecimalFormat newFormat = new DecimalFormat("#.##");
 		amount =  Double.valueOf(newFormat.format(amount));
 		
+		double new_total = getPrice()+amount;
+		
 		PreparedStatement stmt = null;
-		if (getPrice() + amount > getMaxPrice()) {
+		if (new_total > getMaxPrice()) {
 			stmt = mysql.prepareStatement("UPDATE stocks SET price = ? WHERE stockID = ?");
 			try {
-				amount = getMaxPrice();
 				stmt.setDouble(1, getMaxPrice());
 				stmt.setString(2, getID());
 			} catch (SQLException e) {
 				
 			}
-		} else if (getPrice() + amount < getMinPrice()) {
+		} else if (new_total < getMinPrice()) {
 			stmt = mysql.prepareStatement("UPDATE stocks SET price = ? WHERE stockID = ?");
 			try {
-				amount = getMinPrice();
 				stmt.setDouble(1, getMinPrice());
 				stmt.setString(2, getID());
 			} catch (SQLException e) {
@@ -176,21 +176,24 @@ public class Stock {
 			}
 		}
 		
+		mysql.execute(stmt);
+		
 		// RECORD THE PRICE CHANGE
-		stmt = mysql.prepareStatement("INSERT INTO stock_history (stockID, price, date_created) VALUES (?, ?, ?)");
+		stmt = mysql.prepareStatement("INSERT INTO stock_history (stockID, price, change_amt, date_created) VALUES (?, ?, ?, ?)");
 		try {
 			java.util.Date date= new java.util.Date();
 	        String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
 	        stmt.setString(1, getID());
-			stmt.setDouble(2, getPrice()+amount);
-			stmt.setString(3, ts);
+			stmt.setDouble(2, new_total);
+			stmt.setDouble(3, amount);
+			stmt.setString(4, ts);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return false;
 		}
-		
-		
+	
 		mysql.execute(stmt);
+		
 		return true;
 	}
 	
