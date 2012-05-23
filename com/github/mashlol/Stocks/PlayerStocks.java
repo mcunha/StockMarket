@@ -119,20 +119,6 @@ public class PlayerStocks {
 				
 				mysql.execute(stmt);
 				
-				// STORE THE SELL PRICE TRANSACTION
-				stmt = mysql.prepareStatement("INSERT INTO player_stock_transactions (player, stockID, trxn_type, price, amount, amount_sold) VALUES (?, ?, 'Sell', ?, ?, 0)");
-				try {
-					stmt.setString(1, player.getName());
-					stmt.setString(2, stock.getID());
-					stmt.setDouble(3, stock.getPrice());
-					stmt.setInt(4, amount);
-				} catch (SQLException e) {
-					e.printStackTrace();
-					return false;
-				}
-				
-				mysql.execute(stmt);
-				
 				// DETERMINE WHICH STOCKS ARE BEING SOLD, UPDATE THE AMOUNT_SOLD
 				
 				int amount_selling = amount;
@@ -155,7 +141,7 @@ public class PlayerStocks {
 								sold_this_round = result.getInt("diff");
 							}
 							
-							System.out.println("[STOCK DEBUG] Selling total " + amount_selling + " - ID: " + result.getInt("id") + " Diff " + result.getInt("diff") + " sold this round: " + sold_this_round);
+//							System.out.println("[STOCK DEBUG] Selling total " + amount_selling + " - ID: " + result.getInt("id") + " Diff " + result.getInt("diff") + " sold this round: " + sold_this_round);
 							
 							// reduce the total amount selling by what was sold this round
 							amount_selling -= sold_this_round;
@@ -170,6 +156,28 @@ public class PlayerStocks {
 								e.printStackTrace();
 								return false;
 							}
+							
+							// The difference per stock
+							double buy_sell_diff = stock.getPrice() - result.getDouble("price");
+							
+							// STORE THE SELL PRICE TRANSACTION
+							stmt = mysql.prepareStatement("" +
+									"INSERT INTO player_stock_transactions (player, stockID, trxn_type, price, amount, amount_sold, unit_difference, total_difference)" +
+									"VALUES (?, ?, 'Sell', ?, ?, 0, ?, ?)");
+							try {
+								stmt.setString(1, player.getName());
+								stmt.setString(2, stock.getID());
+								stmt.setDouble(3, stock.getPrice());
+								stmt.setInt(4, amount);
+								stmt.setDouble(5, buy_sell_diff);
+								stmt.setDouble(6, (buy_sell_diff * sold_this_round) );
+							} catch (SQLException e) {
+								e.printStackTrace();
+								return false;
+							}
+							
+							mysql.execute(stmt);
+							
 						}
 					}
 				} catch (SQLException e) {
