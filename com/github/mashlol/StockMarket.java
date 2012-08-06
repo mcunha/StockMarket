@@ -108,7 +108,7 @@ public class StockMarket extends JavaPlugin {
 		events.clear();
 		int i = 0;
 		while(getConfig().getString("events." + i + ".message") != null) {
-			events.add(new Event(getConfig().getString("events." + i + ".message"), getConfig().getInt("events." + i + ".effect"), getConfig().getBoolean("events." + i + ".up"), getConfig().getInt("events." + i + ".frequency")));
+			events.add(new Event(getConfig().getString("events." + i + ".message"), getConfig().getBoolean("events." + i + ".up"), getConfig().getInt("events." + i + ".frequency")));
 			i++;
 		}
 	}

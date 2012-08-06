@@ -43,11 +43,29 @@ public class EventInstance {
 	public boolean forceRandomEvent(Stock s) {
 		Event e = getRandomEvent();
 		
-		broadcastMessage(e.getMessage().replaceAll("%s", s.getID()));
-		s.changePrice(s.updatePrice(e.getUp(), e.getScalar()));
+		double price_change = s.updatePrice(e.getUp(), e.getFrequency());
+		
+		String chg_msg = "";
+		if(price_change > 0){
+			chg_msg = ChatColor.GREEN + "+" + round(price_change);
+		} else {
+			chg_msg = ChatColor.RED + "" + round(price_change);
+		}
+		
+		broadcastMessage( e.getMessage().replaceAll("%s", s.getID()) + " CHG: " + chg_msg );
+		s.changePrice(price_change);
 		
 		return true;
 	}
+	
+	/**
+     * 
+     * @param val
+     * @return
+     */
+	public float round( Double val ){
+    	return (float) (Math.round( val *100.0) / 100.0);
+    }
 	
 	private void broadcastMessage (String message) {
 		if (StockMarket.broadcastEvents)

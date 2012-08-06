@@ -5,7 +5,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
-import java.util.Random;
 
 import com.github.mashlol.MySQL;
 
@@ -197,22 +196,49 @@ public class Stock {
 		return true;
 	}
 	
-	public double updatePrice(boolean up, double scalar) {
+	
+	/**
+	 * 
+	 * @param frequency
+	 * @return
+	 */
+	public double getStockFluctuation( double frequency ){
+		double rand = 250 + (int)(Math.random() * ((300 - 250) + 1));
+		return 10*((rand-frequency)/rand)/100;
+	}
+	
+	
+	/**
+	 * 
+	 * @param fluctuation
+	 * @return
+	 */
+	public double getStockFluctuationAmount( double fluctuation ){
+		return getPrice() * fluctuation;
+	}
+	
+	
+	/**
+	 * 
+	 * @param up
+	 * @param frequency
+	 * @return
+	 */
+	public double updatePrice(boolean up, double frequency) {
 		double d = 0;
-		Random random = new Random();
-		double a = random.nextDouble();
+
+		double fluc = getStockFluctuation( frequency );
 		
 		// determine a suitable base price of fluctuation
-		double fluc_base = getPrice() * (getPrice()/1000);
-		System.out.println("Stock Market Event Fluctuation base: " + fluc_base);
+		double fluc_base = getStockFluctuationAmount( fluc );
 		if (up) {
-			d = ((double) getVolatility() / 100) * (a * (scalar * .01) * fluc_base);
+			d = ((double) getVolatility() / 100) * fluc_base;
 		} else {
-			d = (-1) * ((double) getVolatility() / 100) * (a * (scalar * .01) * fluc_base);
+			d = (-1) * ((double) getVolatility() / 100) * fluc_base;
 		}
-		
 		return d;
 	}
+	
 	
 	public boolean exists() {
 		return this.exists;
