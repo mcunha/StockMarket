@@ -202,27 +202,14 @@ public class Stock {
 		Random random = new Random();
 		double a = random.nextDouble();
 		
+		// determine a suitable base price of fluctuation
+		double fluc_base = getPrice() * (getPrice()/1000);
+		System.out.println("Stock Market Event Fluctuation base: " + fluc_base);
 		if (up) {
-			d = ((double) getVolatility() / 100) * (a * (scalar * .01) * (getBasePrice() + 1));
-//			if (getPrice() == getBasePrice()) {
-//				d = ((double) getVolatility() / 100) * ((a * scalar) + 1);
-//			} else if (getPrice() - getBasePrice() > 0) {
-//				d = (1/((getPrice() - getBasePrice())/getBasePrice())) * ((double) getVolatility() / 100) * ((a * scalar) + 1);
-//			} else {
-//				d = ((double) Math.abs(getPrice() - getBasePrice()) / 5) * ((double) getVolatility() / 100) * ((a * scalar) + 1);
-//			}
+			d = ((double) getVolatility() / 100) * (a * (scalar * .01) * fluc_base);
 		} else {
-			d = (-1) * ((double) getVolatility() / 100) * (a * (scalar * .01) * (getBasePrice() + 1));
-//			if (getPrice() - getBasePrice() == 0) {
-//				d = (-1) * ((double) getVolatility() / 100) * ((a * scalar) + 1);
-//			} else if (getPrice() - getBasePrice() > 0) {
-//				d = (-1) * ((double) Math.abs(getPrice() - getBasePrice()) / 5) * ((double) getVolatility() / 100) * ((a * scalar) + 1);
-//			} else {
-//				d = (-1) * (1/((getPrice() - getBasePrice())/getBasePrice())) * ((double) getVolatility() / 100) * ((a * scalar) + 1);
-//			}
+			d = (-1) * ((double) getVolatility() / 100) * (a * (scalar * .01) * fluc_base);
 		}
-		
-		//System.out.println("Number: " + d + ", Random number: " + a + ", Random & Scalar: " + (a * (scalar * .01) * getBasePrice()));
 		
 		return d;
 	}
