@@ -309,40 +309,74 @@ public class PlayerStocks {
 		DecimalFormat newFormat = new DecimalFormat("#.##");
 		
 		if (!hasStocks()) {
-			m.errorMessage("You don't own any stocks. /sm help for help.");
+			m.errorMessage("You don't own any stocks. Use /sm list, then /sm buy [stock code]");
 			return;
 		}
 		
 		m.successMessage("List of your stocks (estimated returns):");
-		for (PlayerStock ps : stock.values())
+		for (PlayerStock ps : stock.values()){
 			if (ps.amount > 0){
 				
-				DecimalFormat diffFormat = new DecimalFormat("#.####");
-				double purch_price = ps.getPurchasePrice(player);
-				
-				double stock_diff = (ps.stock.getPrice() - purch_price);
-				String diff = diffFormat.format( stock_diff );
-				double returns_price = stock_diff * ps.amount;
-				String returns = diffFormat.format(returns_price);
-				
-				ChatColor stock_diff_color = ChatColor.RED;
-				if(stock_diff > 0){
-					stock_diff_color = ChatColor.GREEN;
-				}
-				
-				ChatColor returns_color = ChatColor.RED;
-				if(returns_price > 0){
-					returns_color = ChatColor.GREEN;
-				}
-				
-				String chat_msg = ps.stock.getID();
-				chat_msg += " $" + ChatColor.AQUA + newFormat.format(ps.stock.getPrice()) + ChatColor.WHITE;
-				chat_msg += ". Paid $" + ChatColor.GRAY + purch_price + ChatColor.WHITE + " for " + ps.amount;
-				chat_msg += " [" + stock_diff_color + diff + ChatColor.WHITE + "]";
-				chat_msg += " Rtrn: $" + returns_color + returns + ChatColor.WHITE;
-				
+				String sep = ChatColor.YELLOW + "---" + ChatColor.WHITE;
+				String chat_msg = sep+" " + ps.stock.getID() + " Currently $" + ChatColor.AQUA + newFormat.format(ps.stock.getPrice()) + ChatColor.WHITE + " "+sep;
 				m.regularMessage( chat_msg );
+				
+				// query the database for the current stock purchases
+				MySQL mysql = new MySQL();
+				
+				PreparedStatement stmt = mysql.prepareStatement("SELECT * FROM player_stock_transactions WHERE player = ? AND stockID = ? AND amount_sold = 0 AND trxn_type = 'Buy' ORDER BY id");
+				try {
+					stmt.setString(1, player.getName());
+					stmt.setString(2, ps.stock.getID());
+					ResultSet result = mysql.query(stmt);
+					
+					DecimalFormat diffFormat = new DecimalFormat("#.####");
+					double total_returns = 0;
+					
+					while (result.next()) {
+						
+						double purch_price = result.getDouble("price");
+						int purch_amount = result.getInt("amount");
+						
+						double stock_diff = (ps.stock.getPrice() - purch_price);
+						String diff = diffFormat.format( stock_diff );
+						double returns_price = stock_diff * purch_amount;
+						total_returns += returns_price;
+						String returns = diffFormat.format(returns_price);
+						
+						ChatColor stock_diff_color = ChatColor.RED;
+						if(stock_diff > 0){
+							stock_diff_color = ChatColor.GREEN;
+						}
+
+						ChatColor returns_color = ChatColor.RED;
+						if(returns_price > 0){
+							returns_color = ChatColor.GREEN;
+						}
+						
+						chat_msg = "  Bought " + purch_amount + " for $" + ChatColor.GRAY + purch_price + ChatColor.WHITE;
+						chat_msg += " Chg: " + stock_diff_color + diff + ChatColor.WHITE + "";
+						chat_msg += " Rtrn: $" + returns_color + returns + ChatColor.WHITE;
+						
+						m.regularMessage( chat_msg );
+					
+					}
+					
+					ChatColor total_returns_color = ChatColor.RED;
+					if(total_returns > 0){
+						total_returns_color = ChatColor.GREEN;
+					}
+					
+					m.regularMessage( ChatColor.GRAY + " Total " + ps.stock.getID() + " returns: " + total_returns_color + "$" + diffFormat.format(total_returns) );
+					
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+				
+				mysql.close();
+				
 			}
+		}
 	}
 	
 	

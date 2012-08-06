@@ -17,10 +17,18 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 
 	private StockMarket plugin;
 	 
+	/**
+	 * 
+	 * @param plugin
+	 */
 	public StockMarketCommandExecutor(StockMarket plugin) {
 		this.plugin = plugin;
 	}
  
+	
+	/**
+	 * 
+	 */
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 		Player player = null;
 		
@@ -30,45 +38,61 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 		
 		Message m = new Message(player);
 		
-		if (command.getName().equalsIgnoreCase("sm")) {
+		if (command.getName().equalsIgnoreCase("sm")){
+			
+			/**
+			 * /sm help
+			 * List plugin command help
+			 */
 			if (args.length >= 1 && args[0].equalsIgnoreCase("help") && (player == null || StockMarket.permission.has(player, "stockmarket.user.help"))) {
 				int page = 1;
-				
 				if (args.length > 1) {
 					try {
 						page = Integer.parseInt(args[1]);
 					} catch (NumberFormatException e) {
-						
 						m.errorMessage("Invalid Syntax. /sm help for help.");
 						return true;
 					}
 				}
-				
 				m.displayHelp(page);
-			} else if (args.length == 1 && args[0].equalsIgnoreCase("info") && (player == null || StockMarket.permission.has(player, "stockmarket.user.info"))) {
-				m.displayInfo();
+				
+			/**
+			 * /sm list mine
+			 * List all the stocks the player currently has.
+			 */
 			} else if (args.length >= 2 && args[0].equalsIgnoreCase("list") && args[1].equalsIgnoreCase("mine") && player != null && StockMarket.permission.has(player, "stockmarket.user.list")) {
-				// LIST ALL THE STOCKS THIS PLAYER OWNS
 				PlayerStocks ps = new PlayerStocks(player);
 				try {
 					ps.listMine();
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+				
+			/**
+			 * /sm list history
+			 * List stock buy/sell history for the player.
+			 */
 			} else if (args.length >= 2 && args[0].equalsIgnoreCase("list") && args[1].equalsIgnoreCase("history") && player != null && StockMarket.permission.has(player, "stockmarket.user.list")) {
-				// LIST STOCK BUY/SELL HISTORY FOR PLAYER
 				PlayerStocks ps = new PlayerStocks(player);
 				try {
 					ps.listHistory();
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+				
+			/**
+			 * /sm list
+			 * List all stocks
+			 */
 			} else if (args.length >= 1 && args[0].equalsIgnoreCase("list") && (player == null || StockMarket.permission.has(player, "stockmarket.user.list"))) {
 				// LIST ALL THE STOCKS THIS PLAYER CAN BUY
 				PlayerStocks ps = new PlayerStocks(player);
 				ps.listAll();
+				
+			/**
+			 * /sm buy
+			 * Buy a stock
+			 */
 			} else if (args.length >= 2 && args[0].equalsIgnoreCase("buy") && player != null && StockMarket.permission.has(player, "stockmarket.user.buy")) {
 				Stock stock = new Stock(args[1]);
 				int amount = 1;
@@ -88,6 +112,11 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 				} else {
 					m.errorMessage("Invalid amount.");
 				}
+				
+			/**
+			 * /sm sell
+			 * Sell a stock
+			 */
 			} else if (args.length >= 2 && args[0].equalsIgnoreCase("sell") && player != null && StockMarket.permission.has(player, "stockmarket.user.sell")) {
 				Stock stock = new Stock(args[1]);
 				int amount = 1;
@@ -107,6 +136,11 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 				} else {
 					m.errorMessage("Invalid amount.");
 				}
+				
+			/**
+			 * /sm add
+			 * Add a stock
+			 */
 			} else if (args.length >= 9 && args[0].equalsIgnoreCase("add") && (player == null || StockMarket.permission.has(player, "stockmarket.admin.add"))) {
 				final String stockID = args[1];
 				final double baseprice;
@@ -150,6 +184,10 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 					return true;
 				}
 				
+			/**
+			 * /sm remove
+			 * Delete a stock
+			 */
 			} else if (args.length == 2 && args[0].equalsIgnoreCase("remove") && (player == null || StockMarket.permission.has(player, "stockmarket.admin.remove"))) {
 				String stockID = args[1];
 				
