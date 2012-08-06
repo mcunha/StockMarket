@@ -1,5 +1,6 @@
 package com.github.mashlol.Stocks;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -22,23 +23,22 @@ public class Stock {
 	
 	private boolean exists;
 	
-	public Stock (String name) {
+	public Stock (String name) throws SQLException {
 		this.stockID = name;
 		
 		exists = getInfo();
 	}
 	
-	private boolean getInfo () {
-		// FIND THIS STOCK IN THE DB IF IT EXISTS
-		MySQL mysql = new MySQL();
+	private boolean getInfo() throws SQLException {
 		
-		PreparedStatement stmt = mysql.prepareStatement("SELECT * FROM stocks WHERE stockID LIKE ? ");
-		try {
-			stmt.setString(1, stockID);
-		} catch (SQLException e) {
-			
-		}
-		ResultSet result = mysql.query(stmt);
+		boolean stock_exists = false;
+
+		MySQL mysql = new MySQL();
+		Connection conn = mysql.getConn();
+		
+		PreparedStatement stmt = conn.prepareStatement("SELECT * FROM stocks WHERE stockID LIKE ? ");
+		stmt.setString(1, stockID);
+		ResultSet result = stmt.executeQuery();
 		
 		try {
 			while (result.next()) {
@@ -51,27 +51,31 @@ public class Stock {
 				volatility = result.getDouble("volatility");
 				amount = result.getInt("amount");
 				dividend = result.getDouble("dividend");
-				mysql.close();
-				return true;
+				stock_exists = true;
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		
-		mysql.close();
+		stmt.close();
+		result.close();
+		conn.close();
 		
-		return false;
+		return stock_exists;
 	}
 	
-	public boolean add (String name, String stockID, double baseprice, double maxprice, double minprice, double volatility, int amount, double dividend) {
+	public boolean add (String name, String stockID, double baseprice, double maxprice, double minprice, double volatility, int amount, double dividend) throws SQLException {
 		MySQL mysql = new MySQL();
+		Connection conn = mysql.getConn();
 		try {
-			mysql.execute("ALTER TABLE players ADD COLUMN " + stockID + " INT DEFAULT 0");
+			PreparedStatement s = conn.prepareStatement("ALTER TABLE players ADD COLUMN " + stockID + " INT DEFAULT 0");
+			s.executeQuery();
+			s.close();
 		} catch (SQLException e) {
 			return false;
 		}
 		
-		PreparedStatement stmt = mysql.prepareStatement("INSERT INTO stocks (name, stockID, price, basePrice, maxPrice, minPrice, volatility, amount, dividend) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		PreparedStatement stmt = conn.prepareStatement("INSERT INTO stocks (name, stockID, price, basePrice, maxPrice, minPrice, volatility, amount, dividend) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 		try {
 			stmt.setString(1, name);
 			stmt.setString(2, stockID);
@@ -87,16 +91,17 @@ public class Stock {
 			return false;
 		}
 		
-		mysql.execute(stmt);
-		mysql.close();
+		stmt.execute();
+		stmt.close();
+		conn.close();
 		
 		return true;
 	}
 	
-	public boolean set (String name, String stockID, double baseprice, double maxprice, double minprice, double volatility, int amount, double dividend) {
+	public boolean set (String name, String stockID, double baseprice, double maxprice, double minprice, double volatility, int amount, double dividend) throws SQLException {
 		MySQL mysql = new MySQL();
-		
-		PreparedStatement stmt = mysql.prepareStatement("UPDATE stocks SET name = ?, basePrice = ?, maxPrice = ?, minPrice = ?, volatility = ?, amount = ?, dividend = ? WHERE StockID LIKE ?");
+		Connection conn = mysql.getConn();
+		PreparedStatement stmt = conn.prepareStatement("UPDATE stocks SET name = ?, basePrice = ?, maxPrice = ?, minPrice = ?, volatility = ?, amount = ?, dividend = ? WHERE StockID LIKE ?");
 		try {
 			stmt.setString(1, name);
 			stmt.setDouble(2, baseprice);
@@ -111,38 +116,42 @@ public class Stock {
 			return false;
 		}
 		
-		mysql.execute(stmt);
-		mysql.close();
+		stmt.execute();
+		stmt.close();
+		conn.close();
 		
 		return true;
 	}
 	
-	public boolean remove () {
+	public boolean remove () throws SQLException {
 		MySQL mysql = new MySQL();
-		
+		Connection conn = mysql.getConn();
 		try {
-			mysql.execute("ALTER TABLE players DROP COLUMN " + stockID);
+			PreparedStatement stmt = conn.prepareStatement("DELETE FROM stocks WHERE StockID LIKE ?");
+			stmt.execute("ALTER TABLE players DROP COLUMN " + stockID);
+			stmt.close();
 		} catch (SQLException e1) {
 			return false;
 		}
 		
-		PreparedStatement stmt = mysql.prepareStatement("DELETE FROM stocks WHERE StockID LIKE ?");
+		PreparedStatement stmt = conn.prepareStatement("DELETE FROM stocks WHERE StockID LIKE ?");
 		try {
 			stmt.setString(1, stockID);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		
-		mysql.execute(stmt);
-		
-		mysql.close();
+		stmt.execute();
+		stmt.close();
+		conn.close();
 		
 		return true;
 	}
 	
-	public boolean changePrice (double amount) {
-		MySQL mysql = new MySQL();
+	public boolean changePrice (double amount) throws SQLException {
 		
+		MySQL mysql = new MySQL();
+		Connection conn = mysql.getConn();
 		DecimalFormat newFormat = new DecimalFormat("#.##");
 		amount =  Double.valueOf(newFormat.format(amount));
 		
@@ -150,48 +159,33 @@ public class Stock {
 		
 		PreparedStatement stmt = null;
 		if (new_total > getMaxPrice()) {
-			stmt = mysql.prepareStatement("UPDATE stocks SET price = ? WHERE stockID = ?");
-			try {
-				stmt.setDouble(1, getMaxPrice());
-				stmt.setString(2, getID());
-			} catch (SQLException e) {
-				
-			}
+			stmt = conn.prepareStatement("UPDATE stocks SET price = ? WHERE stockID = ?");
+			stmt.setDouble(1, getMaxPrice());
+			stmt.setString(2, getID());
 		} else if (new_total < getMinPrice()) {
-			stmt = mysql.prepareStatement("UPDATE stocks SET price = ? WHERE stockID = ?");
-			try {
-				stmt.setDouble(1, getMinPrice());
-				stmt.setString(2, getID());
-			} catch (SQLException e) {
-				
-			}
+			stmt = conn.prepareStatement("UPDATE stocks SET price = ? WHERE stockID = ?");
+			stmt.setDouble(1, getMinPrice());
+			stmt.setString(2, getID());
 		} else {
-			stmt = mysql.prepareStatement("UPDATE stocks SET price = price + ? WHERE stockID = ?");
-			try {
-				stmt.setDouble(1, amount);
-				stmt.setString(2, getID());
-			} catch (SQLException e) {
-				
-			}
+			stmt = conn.prepareStatement("UPDATE stocks SET price = price + ? WHERE stockID = ?");
+			stmt.setDouble(1, amount);
+			stmt.setString(2, getID());
 		}
-		
-		mysql.execute(stmt);
+		stmt.execute();
+		stmt.close();
 		
 		// RECORD THE PRICE CHANGE
-		stmt = mysql.prepareStatement("INSERT INTO stock_history (stockID, price, change_amt, date_created) VALUES (?, ?, ?, ?)");
-		try {
-			java.util.Date date= new java.util.Date();
-	        String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
-	        stmt.setString(1, getID());
-			stmt.setDouble(2, new_total);
-			stmt.setDouble(3, amount);
-			stmt.setString(4, ts);
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return false;
-		}
-	
-		mysql.execute(stmt);
+		stmt = conn.prepareStatement("INSERT INTO stock_history (stockID, price, change_amt, date_created) VALUES (?, ?, ?, ?)");
+		java.util.Date date= new java.util.Date();
+        String ts = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date.getTime());
+        stmt.setString(1, getID());
+		stmt.setDouble(2, new_total);
+		stmt.setDouble(3, amount);
+		stmt.setString(4, ts);
+		stmt.execute();
+		stmt.close();
+		
+		conn.close();
 		
 		return true;
 	}
@@ -203,7 +197,7 @@ public class Stock {
 	 * @return
 	 */
 	public double getStockFluctuation( double frequency ){
-		double rand = 250 + (int)(Math.random() * ((300 - 250) + 1));
+		double rand = 80 + (int)(Math.random() * ((120 - 80) + 1));
 		return 10*((rand-frequency)/rand)/100;
 	}
 	
@@ -237,6 +231,17 @@ public class Stock {
 			d = (-1) * ((double) getVolatility() / 100) * fluc_base;
 		}
 		return d;
+	}
+	
+	
+	/**
+	 * 
+	 * @param up
+	 * @param frequency
+	 * @return
+	 */
+	public double getMarketCrashPriceChange() {
+		return (-1) * (getPrice() * 0.75);
 	}
 	
 	

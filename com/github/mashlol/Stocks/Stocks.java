@@ -1,24 +1,26 @@
 package com.github.mashlol.Stocks;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Random;
-import java.util.Vector;
 
 import com.github.mashlol.MySQL;
 
 public class Stocks {
 
-	private Vector<Stock> stock = new Vector<Stock>();
+	private ArrayList<Stock> stock = new ArrayList<Stock>();
 	private Random random = new Random();
 	
-	public Stocks () {
-		// WE FOUND IT, STORE SOME INFO
+	public Stocks () throws SQLException {
+
 		MySQL mysql = new MySQL();
+		Connection conn = mysql.getConn();
 		
-		PreparedStatement stmt = mysql.prepareStatement("SELECT stockID FROM stocks");
-		ResultSet result = mysql.query(stmt);
+		PreparedStatement stmt = conn.prepareStatement("SELECT stockID FROM stocks");
+		ResultSet result = stmt.executeQuery();
 		try {
 			while (result.next()) {
 				stock.add(new Stock(result.getString("stockID")));
@@ -27,7 +29,9 @@ public class Stocks {
 			e.printStackTrace();
 		}
 		
-		mysql.close();
+		result.close();
+		stmt.close();
+		conn.close();
 	}
 	
 	public Stock getRandomStock () {
@@ -38,4 +42,7 @@ public class Stocks {
 		return stock.size();
 	}
 	
+	public ArrayList<Stock> getStocks(){
+		return stock;
+	}
 }

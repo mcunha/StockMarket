@@ -1,5 +1,6 @@
 package com.github.mashlol;
  
+import java.sql.SQLException;
 import java.util.Vector;
 import java.util.logging.Logger;
 
@@ -50,6 +51,9 @@ public class StockMarket extends JavaPlugin {
 			d.finish();
 		} catch (NullPointerException e) {
 			System.out.println("[StockMarket] A StockMarket thread never started!");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -77,10 +81,20 @@ public class StockMarket extends JavaPlugin {
 		
 		loadConfiguration();
 		
-		e = new StockMarketEventThread();
+		try {
+			e = new StockMarketEventThread();
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		e.start();
 		
-		d = new StockMarketDividendThread();
+		try {
+			d = new StockMarketDividendThread();
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		d.start();
 	}
 	

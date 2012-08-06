@@ -1,5 +1,7 @@
 package com.github.mashlol.Threads;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -14,22 +16,25 @@ public class StockMarketEventThread extends Thread {
 	private boolean loop = true;
 	private int loopTimes = 0;
 	
-	public StockMarketEventThread (){
+	public StockMarketEventThread () throws SQLException{
 		super ("StockMarketEventThread");
 		
 		MySQL mysql = new MySQL();
-		
-		ResultSet result = mysql.query("SELECT looptime FROM looptime");
+		Connection conn = mysql.getConn();
+		PreparedStatement s = conn.prepareStatement("SELECT looptime FROM looptime");
+		ResultSet result = s.executeQuery();
 		
 		try {
 			while (result.next()) {
 				loopTimes = result.getInt("looptime");
 			}
+			s.close();
+			result.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		
-		mysql.close();
+		conn.close();
 	}
 	
 	public void run() {
@@ -51,30 +56,43 @@ public class StockMarketEventThread extends Thread {
 				
 				if (loopTimes % StockMarket.randomEventFreq == 0) {
 					loopTimes = 0;
-					Stocks stocks = new Stocks();
+					Stocks stocks = null;
+					try {
+						stocks = new Stocks();
+					} catch (SQLException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					
-					if (stocks.numStocks() > 0) {
+					if (stocks != null && stocks.numStocks() > 0) {
 						Stock stock = stocks.getRandomStock();
 						EventInstance ei = new EventInstance();
-						ei.forceRandomEvent(stock);
+						try {
+							ei.forceRandomEvent(stock);
+						} catch (SQLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					}
 				}
 			}
 		}
 	}
 	
-	public void finish() {
+	public void finish() throws SQLException {
 		loop = false;
 		
 		MySQL mysql = new MySQL();
-		
+		Connection conn = mysql.getConn();
 		try {
-			mysql.execute("UPDATE looptime SET looptime = " + loopTimes);
+			PreparedStatement s = conn.prepareStatement("UPDATE looptime SET looptime = " + loopTimes);
+			s.execute();
+			s.close();
 		} catch (SQLException e) {
 			
 		}
 		
-		mysql.close();
+		conn.close();
 	}
 	
 	
