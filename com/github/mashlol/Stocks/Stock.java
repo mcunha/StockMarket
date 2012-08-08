@@ -69,7 +69,7 @@ public class Stock {
 		Connection conn = mysql.getConn();
 		try {
 			PreparedStatement s = conn.prepareStatement("ALTER TABLE players ADD COLUMN " + stockID + " INT DEFAULT 0");
-			s.executeQuery();
+			s.execute();
 			s.close();
 		} catch (SQLException e) {
 			return false;
@@ -90,7 +90,7 @@ public class Stock {
 			e.printStackTrace();
 			return false;
 		}
-		
+
 		stmt.execute();
 		stmt.close();
 		conn.close();
@@ -198,6 +198,7 @@ public class Stock {
 	 */
 	public double getStockFluctuation( double frequency ){
 		double rand = 80 + (int)(Math.random() * ((120 - 80) + 1));
+		System.out.print("STOCKS: RANDOM INT: " + rand);
 		return 10*((rand-frequency)/rand)/100;
 	}
 	
@@ -223,6 +224,8 @@ public class Stock {
 
 		double fluc = getStockFluctuation( frequency );
 		
+		System.out.print("STOCKS: fluctuation INT: " + fluc);
+		
 		// determine a suitable base price of fluctuation
 		double fluc_base = getStockFluctuationAmount( fluc );
 		if (up) {
@@ -230,6 +233,19 @@ public class Stock {
 		} else {
 			d = (-1) * ((double) getVolatility() / 100) * fluc_base;
 		}
+		
+		// enforce a minimum price change
+		if(d > 0){
+			while(d <= 0.20){
+				d+=0.10;
+			}
+		} else {
+			while(d >= -0.20){
+				d-=0.10;
+			}
+		}
+		
+		System.out.print("STOCKS: CHANGE: " + d);
 		return d;
 	}
 	

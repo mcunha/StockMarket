@@ -98,6 +98,7 @@ public class PlayerStocks {
 		Message m = new Message(player);
 		
 		if (stock.exists()) {
+			
 				// CHECK THE PLAYER HAS ENOUGH TO SELL
 				if (this.stock.get(stock.getID()).amount - amount < 0) {
 					m.errorMessage("Failed to sell!  Check that you have that many!");
@@ -144,7 +145,7 @@ public class PlayerStocks {
 								sold_this_round = result.getInt("diff");
 							}
 							
-//							System.out.println("[STOCK DEBUG] Selling total " + amount_selling + " - ID: " + result.getInt("id") + " Diff " + result.getInt("diff") + " sold this round: " + sold_this_round);
+							System.out.println("[STOCK DEBUG] Selling total " + amount_selling + " - ID: " + result.getInt("id") + " Diff " + result.getInt("diff") + " sold this round: " + sold_this_round);
 							
 							// reduce the total amount selling by what was sold this round
 							amount_selling -= sold_this_round;
@@ -333,7 +334,7 @@ public class PlayerStocks {
 				// query the database for the current stock purchases
 				MySQL mysql = new MySQL();
 				Connection conn = mysql.getConn();
-				PreparedStatement stmt = conn.prepareStatement("SELECT * FROM player_stock_transactions WHERE player = ? AND stockID = ? AND amount_sold = 0 AND trxn_type = 'Buy' ORDER BY id");
+				PreparedStatement stmt = conn.prepareStatement("SELECT *, amount - amount_sold as remaining FROM player_stock_transactions WHERE player = ? AND stockID = ? AND amount_sold < amount AND trxn_type = 'Buy' ORDER BY id");
 				try {
 					stmt.setString(1, player.getName());
 					stmt.setString(2, ps.stock.getID());
@@ -346,6 +347,7 @@ public class PlayerStocks {
 						
 						double purch_price = result.getDouble("price");
 						int purch_amount = result.getInt("amount");
+						int remaining_amount = result.getInt("remaining");
 						
 						double stock_diff = (ps.stock.getPrice() - purch_price);
 						String diff = diffFormat.format( stock_diff );
@@ -363,7 +365,7 @@ public class PlayerStocks {
 							returns_color = ChatColor.GREEN;
 						}
 						
-						chat_msg = "  Bought " + purch_amount + " for $" + ChatColor.GRAY + purch_price + ChatColor.WHITE;
+						chat_msg = "Bought " + remaining_amount + " at $" + ChatColor.GRAY + purch_price + ChatColor.WHITE;
 						chat_msg += " Chg: " + stock_diff_color + diff + ChatColor.WHITE + "";
 						chat_msg += " Rtrn: $" + returns_color + returns + ChatColor.WHITE;
 						
