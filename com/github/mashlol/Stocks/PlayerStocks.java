@@ -127,9 +127,10 @@ public class PlayerStocks {
 				
 				int amount_selling = amount;
 
-				stmt = conn.prepareStatement("SELECT *, amount - amount_sold as diff FROM player_stock_transactions WHERE player = ? AND amount_sold < amount AND trxn_type = 'Buy' ORDER BY id");
+				stmt = conn.prepareStatement("SELECT *, amount - amount_sold as diff FROM player_stock_transactions WHERE player = ? AND amount_sold < amount AND trxn_type = 'Buy' AND stockID = ? ORDER BY id");
 				try {
 					stmt.setString(1, player.getName());
+					stmt.setString(2, stock.getID());
 					ResultSet result = stmt.executeQuery();
 					while (result.next()) {
 						
