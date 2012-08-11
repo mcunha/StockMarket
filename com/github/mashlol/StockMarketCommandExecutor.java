@@ -364,9 +364,6 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 					// BASE SHOULD ONLY DISPLAY FOR A SPECIAL PERMISSION NODE
 					if (player == null || StockMarket.permission.has(player, "stockmarket.admin.baseprice"))
 						m.regularMessage("Base Price: " + stock.getBasePrice());
-					m.regularMessage("Max Price: " + stock.getMaxPrice());
-					m.regularMessage("Min Price: " + stock.getMinPrice());
-					m.regularMessage("Volatility: " + stock.getVolatility());
 					m.regularMessage("Dividend: " + stock.getDividend() + "% per stock.");
 					if (stock.getAmount() != -1) 
 						m.regularMessage("Current Amount: " + stock.getAmount());

@@ -15,8 +15,6 @@ public class Stock {
 	private String stockID;
 	private double price;
 	private double basePrice;
-	private double maxPrice;
-	private double minPrice;
 	private double volatility;
 	private int amount;
 	private double dividend;
@@ -46,8 +44,6 @@ public class Stock {
 				name = result.getString("name");
 				price = result.getDouble("price");
 				basePrice = result.getDouble("basePrice");
-				maxPrice = result.getDouble("maxPrice");
-				minPrice = result.getDouble("minPrice");
 				volatility = result.getDouble("volatility");
 				amount = result.getInt("amount");
 				dividend = result.getDouble("dividend");
@@ -158,14 +154,9 @@ public class Stock {
 		double new_total = getPrice()+amount;
 		
 		PreparedStatement stmt = null;
-		if (new_total > getMaxPrice()) {
-			stmt = conn.prepareStatement("UPDATE stocks SET price = ? WHERE stockID = ?");
-			stmt.setDouble(1, getMaxPrice());
-			stmt.setString(2, getID());
-		} else if (new_total < getMinPrice()) {
-			stmt = conn.prepareStatement("UPDATE stocks SET price = ? WHERE stockID = ?");
-			stmt.setDouble(1, getMinPrice());
-			stmt.setString(2, getID());
+		if (new_total <= 1) {
+			stmt = conn.prepareStatement("UPDATE stocks SET price = 1 WHERE stockID = ?");
+			stmt.setString(1, getID());
 		} else {
 			stmt = conn.prepareStatement("UPDATE stocks SET price = price + ? WHERE stockID = ?");
 			stmt.setDouble(1, amount);
@@ -198,7 +189,6 @@ public class Stock {
 	 */
 	public double getStockFluctuation( double frequency ){
 		double rand = 80 + (int)(Math.random() * ((120 - 80) + 1));
-		System.out.print("STOCKS: RANDOM INT: " + rand);
 		return 10*((rand-frequency)/rand)/100;
 	}
 	
@@ -224,8 +214,6 @@ public class Stock {
 
 		double fluc = getStockFluctuation( frequency );
 		
-		System.out.print("STOCKS: fluctuation INT: " + fluc);
-		
 		// determine a suitable base price of fluctuation
 		double fluc_base = getStockFluctuationAmount( fluc );
 		if (up) {
@@ -244,8 +232,7 @@ public class Stock {
 				d-=0.10;
 			}
 		}
-		
-		System.out.print("STOCKS: CHANGE: " + d);
+
 		return d;
 	}
 	
@@ -263,14 +250,6 @@ public class Stock {
 	
 	public boolean exists() {
 		return this.exists;
-	}
-	
-	public double getMinPrice() {
-		return this.minPrice;
-	}
-	
-	public double getMaxPrice() {
-		return this.maxPrice;
 	}
 	
 	public double getBasePrice() {
