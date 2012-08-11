@@ -150,10 +150,10 @@ public class StockMarket extends JavaPlugin {
         return (permission != null);
     }
 	
-	 private Boolean setupEconomy() {
-        RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
-        if (economyProvider != null) {
-            economy = economyProvider.getProvider();
+	private Boolean setupEconomy() {
+ 		RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
+        if (rsp != null) {
+        	economy = rsp.getProvider();
         }
 
         return (economy != null);
