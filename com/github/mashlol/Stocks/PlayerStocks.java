@@ -127,10 +127,12 @@ public class PlayerStocks {
 				
 				int amount_selling = amount;
 
-				stmt = conn.prepareStatement("SELECT *, amount - amount_sold as diff FROM player_stock_transactions WHERE player = ? AND amount_sold < amount AND trxn_type = 'Buy' AND stockID = ? ORDER BY id");
+				// PROCESS ROWS BY MOST PROFITABLE SALES ORDER
+				stmt = conn.prepareStatement("SELECT *, amount - amount_sold as qty_diff, ? - price as price_diff FROM player_stock_transactions WHERE player = ? AND amount_sold < amount AND trxn_type = 'Buy' AND stockID = ? ORDER BY price_diff DESC");
 				try {
-					stmt.setString(1, player.getName());
-					stmt.setString(2, stock.getID());
+					stmt.setDouble(1, stock.getPrice());
+					stmt.setString(2, player.getName());
+					stmt.setString(3, stock.getID());
 					ResultSet result = stmt.executeQuery();
 					while (result.next()) {
 						
@@ -139,14 +141,14 @@ public class PlayerStocks {
 						if(amount_selling > 0){
 						
 							// if we're selling less than the stock amount for the current buy trxn
-							if(amount_selling <= result.getInt("diff")){
+							if(amount_selling <= result.getInt("qty_diff")){
 								sold_this_round = amount_selling;
 							} else {
-								// otherwise, we're selling more but can't exceed the diff at this point
-								sold_this_round = result.getInt("diff");
+								// otherwise, we're selling more but can't exceed the qty_diff at this point
+								sold_this_round = result.getInt("qty_diff");
 							}
 							
-							System.out.println("[STOCK DEBUG] Selling total " + amount_selling + " - ID: " + result.getInt("id") + " Diff " + result.getInt("diff") + " sold this round: " + sold_this_round);
+							System.out.println("[STOCK DEBUG] Selling total " + amount_selling + " - ID: " + result.getInt("id") + " Price Diff " + result.getInt("price_diff") + " Qty Diff " + result.getInt("qty_diff") + " sold this round: " + sold_this_round);
 							
 							// reduce the total amount selling by what was sold this round
 							amount_selling -= sold_this_round;
