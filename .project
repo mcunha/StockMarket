@@ -3,6 +3,8 @@
 	<name>StockMarket</name>
 	<comment></comment>
 	<projects>
+		<project>Bukkit</project>
+		<project>Vault</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

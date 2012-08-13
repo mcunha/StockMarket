@@ -2,7 +2,9 @@
 <classpath>
 	<classpathentry kind="src" path=""/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/Users/botskonet/Documents/workspace/LIBS/bukkit.jar"/>
-	<classpathentry kind="lib" path="/Users/botskonet/Documents/workspace/LIBS/Vault.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Bukkit"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Vault"/>
+	<classpathentry kind="lib" path="/Users/mcunha/.m2/repository/net/milkbowl/vault/Vault/1.2.18-SNAPSHOT/Vault-1.2.18-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="/Users/mcunha/.m2/repository/org/avaje/ebean/2.7.3/ebean-2.7.3.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>
