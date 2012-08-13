@@ -324,6 +324,58 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 					e.printStackTrace();
 				}
 				
+			/**
+			 * /sm addshares
+			 * Add shares and dilute existing stock
+			 */
+			} else if (args.length >= 8 && args[0].equalsIgnoreCase("addshares") && (player == null || StockMarket.permission.has(player, "stockmarket.admin.addshares"))){
+				String stockID = args[1];
+				int extraAmount;
+				double extraSharePps = 0.0;
+
+				try {
+					extraAmount = Integer.parseInt(args[2]);
+				} catch (NumberFormatException e) {
+					m.errorMessage("Invalid syntax for the extra amount of shares.");
+					return true;
+				}
+
+				if (args.length > 2) {
+					try {
+						extraSharePps = Double.parseDouble(args[3]);
+					} catch (NumberFormatException e) {
+						m.errorMessage("Invalid syntax for the price of the extra shares.");
+						return true;
+					}
+				}
+
+				if (extraAmount < 1) {
+					m.errorMessage("Invalid amount of extra shares.");
+					return true;
+				}
+
+				if (extraSharePps < 0.0) {
+					m.errorMessage("Invalid price for the extra shares.");
+					return true;
+				}
+
+				Stock stock = null;
+				try {
+					stock = new Stock(stockID);
+				} catch (SQLException e) {
+					e.printStackTrace();
+					m.errorMessage("Failed to adjust stock.  Make sure the ID was valid.");
+					return true;
+				}
+						
+				try {
+					if (stock.dilute(extraAmount, extraSharePps))
+						m.successMessage("Successfully added shares to stock.");
+					else
+						m.errorMessage("Failed to adjust stock.  Error while diluting stock.");
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
 			} else if (args.length == 1 && args[0].equalsIgnoreCase("reload") && (player == null || StockMarket.permission.has(player, "stockmarket.admin.reload"))) { 
 				plugin.reloadConfig();
 				plugin.loadConfiguration();
