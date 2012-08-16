@@ -248,6 +248,15 @@ public class Stock {
 	}
 	
 	
+	/**
+	 * 
+	 * @return
+	 */
+	public double getMarketBubblePriceChange(){
+		return (getPrice() * 0.25);
+	}
+	
+	
 	public boolean exists() {
 		return this.exists;
 	}
