@@ -86,7 +86,7 @@ public class EventInstance {
 	 */
 	public boolean forceRandomEvent(Stock s) throws SQLException {
 		
-		int rnum = getRandomNumber(300);
+		int rnum = getRandomNumber(2000);
 		if(rnum == 3){
 			
 			// Stock market crash
@@ -99,6 +99,20 @@ public class EventInstance {
 				s_temp.changePrice( s_temp.getMarketCrashPriceChange() );
 			}
 			broadcastMessage( "STOCK MARKET CRASH! All stocks lose 75% of value... market in shambles..." );
+			
+		}
+		else if(rnum == 22){
+			
+			// Stock market bubble
+			Stocks st = new Stocks();
+			ArrayList<Stock> stocks = st.getStocks();
+
+			Iterator<Stock> itr = stocks.iterator();
+			while(itr.hasNext()){
+				Stock s_temp = itr.next();
+				s_temp.changePrice( s_temp.getMarketBubblePriceChange() );
+			}
+			broadcastMessage( "STOCKS SURGE WITH TECH BUBBLE! All stocks increase by 25% of value..." );
 			
 		} else {
 		
