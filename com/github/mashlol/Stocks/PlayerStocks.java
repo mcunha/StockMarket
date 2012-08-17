@@ -94,6 +94,8 @@ public class PlayerStocks {
 		return this.exists;
 	}
 	
+	protected DecimalFormat moneyFormatter= new DecimalFormat("#.##");
+	
 	public boolean sell (Stock stock, int amount) throws SQLException {
 		Message m = new Message(player);
 		
@@ -148,7 +150,7 @@ public class PlayerStocks {
 								sold_this_round = result.getInt("qty_diff");
 							}
 							
-							System.out.println("[STOCK DEBUG] Selling total " + amount_selling + " - ID: " + result.getInt("id") + " Price Diff " + result.getInt("price_diff") + " Qty Diff " + result.getInt("qty_diff") + " sold this round: " + sold_this_round);
+							System.out.println("[STOCK DEBUG] Selling total " + amount_selling + " - ID: " + result.getInt("id") + " Price Diff " + moneyFormatter.format(result.getDouble("price_diff")) + " Qty Diff " + result.getInt("qty_diff") + " sold this round: " + sold_this_round);
 							
 							// reduce the total amount selling by what was sold this round
 							amount_selling -= sold_this_round;
