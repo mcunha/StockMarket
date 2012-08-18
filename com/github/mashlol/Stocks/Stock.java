@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 
+import com.github.mashlol.MoneyUtils;
 import com.github.mashlol.MySQL;
 
 public class Stock {
@@ -240,8 +241,7 @@ public class Stock {
 		
 		MySQL mysql = new MySQL();
 		Connection conn = mysql.getConn();
-		DecimalFormat newFormat = new DecimalFormat("#.##");
-		amount =  Double.valueOf(newFormat.format(amount));
+		amount =  MoneyUtils.round(amount);
 		
 		double new_total = getPrice()+amount;
 		

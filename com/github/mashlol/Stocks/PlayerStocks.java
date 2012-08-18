@@ -10,6 +10,7 @@ import java.util.HashMap;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
+import com.github.mashlol.MoneyUtils;
 import com.github.mashlol.MySQL;
 import com.github.mashlol.StockMarket;
 import com.github.mashlol.Messages.Message;
@@ -94,8 +95,6 @@ public class PlayerStocks {
 		return this.exists;
 	}
 	
-	protected DecimalFormat moneyFormatter= new DecimalFormat("#.##");
-	
 	public boolean sell (Stock stock, int amount) throws SQLException {
 		Message m = new Message(player);
 		
@@ -150,7 +149,7 @@ public class PlayerStocks {
 								sold_this_round = result.getInt("qty_diff");
 							}
 							
-							System.out.println("[STOCK DEBUG] Selling total " + amount_selling + " - ID: " + result.getInt("id") + " Price Diff " + moneyFormatter.format(result.getDouble("price_diff")) + " Qty Diff " + result.getInt("qty_diff") + " sold this round: " + sold_this_round);
+							System.out.println("[STOCK DEBUG] Selling total " + amount_selling + " - ID: " + result.getInt("id") + " Price Diff " + MoneyUtils.format(result.getDouble("price_diff")) + " Qty Diff " + result.getInt("qty_diff") + " sold this round: " + sold_this_round);
 							
 							// reduce the total amount selling by what was sold this round
 							amount_selling -= sold_this_round;
@@ -312,16 +311,14 @@ public class PlayerStocks {
 	
 	public void listAll () {
 		Message m = new Message(player);
-		DecimalFormat newFormat = new DecimalFormat("#.##");
 		
 		m.successMessage("List of stocks:");
 		for (PlayerStock ps : stock.values())
-			m.regularMessage(ps.stock.getID() + " - $" + ChatColor.AQUA + newFormat.format(ps.stock.getPrice()) + ChatColor.WHITE + " - Qty: " + ps.stock.getAmount() + ChatColor.WHITE + " - " + ps.stock.getName());
+			m.regularMessage(ps.stock.getID() + " - $" + ChatColor.AQUA + MoneyUtils.format(ps.stock.getPrice()) + ChatColor.WHITE + " - Qty: " + ps.stock.getAmount() + ChatColor.WHITE + " - " + ps.stock.getName());
 	}
 	
 	public void listMine () throws SQLException {
 		Message m = new Message(player);
-		DecimalFormat newFormat = new DecimalFormat("#.##");
 		
 		if (!hasStocks()) {
 			m.errorMessage("You don't own any stocks. Use /sm list, then /sm buy [stock code]");
@@ -333,7 +330,7 @@ public class PlayerStocks {
 			if (ps.amount > 0){
 				
 				String sep = ChatColor.YELLOW + "---" + ChatColor.WHITE;
-				String chat_msg = sep+" " + ps.stock.getID() + " Currently $" + ChatColor.AQUA + newFormat.format(ps.stock.getPrice()) + ChatColor.WHITE + " "+sep;
+				String chat_msg = sep+" " + ps.stock.getID() + " Currently $" + ChatColor.AQUA + MoneyUtils.format(ps.stock.getPrice()) + ChatColor.WHITE + " "+sep;
 				m.regularMessage( chat_msg );
 				
 				// query the database for the current stock purchases
@@ -345,7 +342,6 @@ public class PlayerStocks {
 					stmt.setString(2, ps.stock.getID());
 					ResultSet result = stmt.executeQuery();
 					
-					DecimalFormat diffFormat = new DecimalFormat("#.####");
 					double total_returns = 0;
 					
 					while (result.next()) {
@@ -355,10 +351,10 @@ public class PlayerStocks {
 						int remaining_amount = result.getInt("total_amount_remaining");
 						
 						double stock_diff = (ps.stock.getPrice() - purch_price);
-						String diff = diffFormat.format( stock_diff );
+						String diff = MoneyUtils.formatMill( stock_diff );
 						double returns_price = stock_diff * purch_amount;
 						total_returns += returns_price;
-						String returns = diffFormat.format(returns_price);
+						String returns = MoneyUtils.formatMill(returns_price);
 						
 						ChatColor stock_diff_color = ChatColor.RED;
 						if(stock_diff > 0){
@@ -383,7 +379,7 @@ public class PlayerStocks {
 						total_returns_color = ChatColor.GREEN;
 					}
 					
-					m.regularMessage( ChatColor.GRAY + " Total " + ps.stock.getID() + " returns: " + total_returns_color + "$" + diffFormat.format(total_returns) );
+					m.regularMessage( ChatColor.GRAY + " Total " + ps.stock.getID() + " returns: " + total_returns_color + "$" + MoneyUtils.formatMill(total_returns) );
 					
 					stmt.close();
 					result.close();
@@ -401,7 +397,6 @@ public class PlayerStocks {
 	
 	public void listHistory () throws SQLException {
 		Message m = new Message(player);
-		DecimalFormat newFormat = new DecimalFormat("#.##");
 		
 		m.successMessage("Stock transaction history:");
 		
@@ -413,7 +408,7 @@ public class PlayerStocks {
 			stmt.setString(1, player.getName());
 			ResultSet result = stmt.executeQuery();
 			while (result.next()) {
-				m.regularMessage( "("+result.getString("trxn_type")+") " + result.getInt("amount") + " " + result.getString("stockID") + " at " + newFormat.format(result.getDouble("price")) );
+				m.regularMessage( "("+result.getString("trxn_type")+") " + result.getInt("amount") + " " + result.getString("stockID") + " at " + MoneyUtils.format(result.getDouble("price")) );
 			}
 			result.close();
 		} catch (SQLException e) {

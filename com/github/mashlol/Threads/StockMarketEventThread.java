@@ -46,6 +46,7 @@ public class StockMarketEventThread extends Thread {
 				Thread.sleep(60000); // THIS DELAY COULD BE CONFIG'D
 			} catch (InterruptedException e) {
 				e.printStackTrace();
+				return; // Someone "asked" us to leave
 			}
 			
 			if (loop) {
@@ -60,7 +61,6 @@ public class StockMarketEventThread extends Thread {
 					try {
 						stocks = new Stocks();
 					} catch (SQLException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					
@@ -70,7 +70,6 @@ public class StockMarketEventThread extends Thread {
 						try {
 							ei.forceRandomEvent(stock);
 						} catch (SQLException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 					}
@@ -94,6 +93,4 @@ public class StockMarketEventThread extends Thread {
 		
 		conn.close();
 	}
-	
-	
 }

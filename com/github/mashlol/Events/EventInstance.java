@@ -4,76 +4,41 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 
+import com.github.mashlol.MoneyUtils;
+import com.github.mashlol.RandomUtils;
 import com.github.mashlol.StockMarket;
 import com.github.mashlol.Stocks.Stock;
 import com.github.mashlol.Stocks.Stocks;
 
 public class EventInstance {
-	
-
 	/**
-	 * Gets a random number
-	 * @return
-	 */
-	public static int getRandomNumber( Integer max ){
-		Random randomGenerator = new Random();
-		return randomGenerator.nextInt(max);
-	}
-	
-	
-	/**
-	 * 
-	 * @param data
-	 * @param weight
-	 * @return
-	 */
-	public static int getWeightedRandomNumber( int[] data, int[] weight ){
-		Random randomGenerator = new Random();
-		int totalWeight = sum(weight);
-		int n=randomGenerator.nextInt(totalWeight);
-		int runningTotal=0;
-		for (int i=0;i<weight.length;i++){
-		  runningTotal+=weight[i];
-		  if (n<runningTotal) return data[i];
-		}
-		return -1;
-	}
-	static int sum(int[] a){
-		int s=0;
-		for (int i=0;i<a.length;i++) s+=a[i];
-		return s;
-	}
-
-	
-	/**
-	 * 
-	 * @param items
-	 * @return
+	 * Randomly pick an event based on its frequency
+	 * @param items list of events to choose from
+	 * @return selected event from items
 	 */
 	public static Event chooseOnWeight(List<Event> items) {
 		
 		// Set total weight for items
-        double completeWeight = 0.0d;
+        int completeWeight = 0;
         for (Event item : items){
             completeWeight += item.getFrequency();
         }
 
-        // Choose a random item
-        double rand = Math.random();
-        double r = rand * completeWeight;
+        // Choose a random number
+        int r = RandomUtils.getRandomNumber(completeWeight);
 
-        double countWeight = 0.0;
+        // Find the event that corresponds to our number
+        int countWeight = 0;
         for (Event item : items) {
             countWeight += item.getFrequency();
             if (countWeight >= r){
                 return item;
             }
         }
+        
         return null;
     }
 
@@ -86,8 +51,9 @@ public class EventInstance {
 	 */
 	public boolean forceRandomEvent(Stock s) throws SQLException {
 		
-		int rnum = getRandomNumber(2000);
-		if(rnum == 3){
+		int rnum = RandomUtils.getRandomNumber(2000);
+		
+		if (rnum == 3) {
 			
 			// Stock market crash
 			Stocks st = new Stocks();
@@ -98,10 +64,9 @@ public class EventInstance {
 				Stock s_temp = itr.next();
 				s_temp.changePrice( s_temp.getMarketCrashPriceChange() );
 			}
-			broadcastMessage( "STOCK MARKET CRASH! All stocks lose 75% of value... market in shambles..." );
+			StockMarket.broadcastEventMessage("STOCK MARKET CRASH! All stocks lose 75% of value... market in shambles...");
 			
-		}
-		else if(rnum == 22){
+		} else if (rnum == 22) {
 			
 			// Stock market bubble
 			Stocks st = new Stocks();
@@ -112,7 +77,7 @@ public class EventInstance {
 				Stock s_temp = itr.next();
 				s_temp.changePrice( s_temp.getMarketBubblePriceChange() );
 			}
-			broadcastMessage( "STOCKS SURGE WITH TECH BUBBLE! All stocks increase by 25% of value..." );
+			StockMarket.broadcastEventMessage("STOCKS SURGE WITH TECH BUBBLE! All stocks increase by 25% of value...");
 			
 		} else {
 		
@@ -122,35 +87,15 @@ public class EventInstance {
 			
 			String chg_msg = "";
 			if(price_change > 0){
-				chg_msg = ChatColor.GREEN + "+" + round(price_change);
+				chg_msg = ChatColor.GREEN + "+" + MoneyUtils.format(price_change);
 			} else {
-				chg_msg = ChatColor.RED + "" + round(price_change);
+				chg_msg = ChatColor.RED + "" + MoneyUtils.format(price_change);
 			}
 			
-			broadcastMessage( e.getMessage().replaceAll("%s", s.getID()) + " CHG: " + chg_msg );
+			StockMarket.broadcastEventMessage( e.getMessage().replaceAll("%s", s.getID()) + " CHG: " + chg_msg );
 			s.changePrice(price_change);
 			
 		}
 		return true;
-	}
-	
-	
-	/**
-     * 
-     * @param val
-     * @return
-     */
-	public float round( Double val ){
-    	return (float) (Math.round( val *100.0) / 100.0);
-    }
-	
-	
-	/**
-	 * 
-	 * @param message
-	 */
-	private void broadcastMessage (String message) {
-		if (StockMarket.broadcastEvents)
-			Bukkit.getServer().broadcastMessage(ChatColor.WHITE + "[" + ChatColor.GOLD + "Stocks" + ChatColor.WHITE + "] " + ChatColor.DARK_GREEN + message);
 	}
 }

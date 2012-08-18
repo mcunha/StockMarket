@@ -5,14 +5,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Random;
 
 import com.github.mashlol.MySQL;
+import com.github.mashlol.RandomUtils;
 
 public class Stocks {
 
 	private ArrayList<Stock> stock = new ArrayList<Stock>();
-	private Random random = new Random();
 	
 	public Stocks () throws SQLException {
 
@@ -35,7 +34,7 @@ public class Stocks {
 	}
 	
 	public Stock getRandomStock () {
-		return stock.get(random.nextInt(stock.size()));
+		return stock.get(RandomUtils.getRandomNumber(stock.size()));
 	}
 	
 	public int numStocks () {

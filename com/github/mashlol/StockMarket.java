@@ -7,6 +7,8 @@ import java.util.logging.Logger;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -14,7 +16,7 @@ import com.github.mashlol.Events.Event;
 import com.github.mashlol.Messages.Command;
 import com.github.mashlol.Threads.StockMarketDividendThread;
 import com.github.mashlol.Threads.StockMarketEventThread;
- 
+
 public class StockMarket extends JavaPlugin {
  
 	private StockMarketCommandExecutor myExecutor;
@@ -52,7 +54,6 @@ public class StockMarket extends JavaPlugin {
 		} catch (NullPointerException e) {
 			System.out.println("[StockMarket] A StockMarket thread never started!");
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -159,4 +160,24 @@ public class StockMarket extends JavaPlugin {
 
         return (economy != null);
     }
+	
+	/**
+	 * Broadcast a Stock Market event message to all players if allowed to do so 
+	 * @param message text to be sent to everyone
+	 */
+	public static void broadcastEventMessage (String message) {
+		if (broadcastEvents) {
+			Bukkit.getServer().broadcastMessage(ChatColor.WHITE + "[" + ChatColor.GOLD + "Stocks" + ChatColor.WHITE + "] " + ChatColor.DARK_GREEN + message);
+		}
+	}
+
+	/**
+	 * Broadcast a Stock Market dividend message to all players if allowed to do so 
+	 * @param message text to be sent to everyone
+	 */
+	public static void broadcastDividendMessage (String message) {
+		if (broadcastPayouts) {
+			Bukkit.getServer().broadcastMessage(ChatColor.WHITE + "[" + ChatColor.GOLD + "StockMarketPayday" + ChatColor.WHITE + "] " + ChatColor.DARK_GREEN + message);
+		}
+	}
 }

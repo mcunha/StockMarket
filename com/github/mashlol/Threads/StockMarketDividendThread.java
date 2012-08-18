@@ -6,7 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import com.github.mashlol.MySQL;
@@ -46,6 +45,7 @@ public class StockMarketDividendThread extends Thread {
 				Thread.sleep(60000); // THIS DELAY COULD BE CONFIG'D
 			} catch (InterruptedException e) {
 				e.printStackTrace();
+				return; // Someone "asked" us to leave
 			}
 			
 			if (loop) {
@@ -54,7 +54,7 @@ public class StockMarketDividendThread extends Thread {
 				// DO SOME EVENT STUFF
 				
 				if (loopTimes % StockMarket.dividendFreq == 0) {
-					broadcastMessage("Paying out all stock dividends");
+					StockMarket.broadcastDividendMessage("Paying out all stock dividends");
 					
 					if (StockMarket.payOffline == true) {
 						MySQL mysql = new MySQL();
@@ -78,11 +78,8 @@ public class StockMarketDividendThread extends Thread {
 								
 							}
 						} catch (SQLException e1) {
-							// TODO Auto-generated catch block
 							e1.printStackTrace();
 						}
-						
-						
 						
 					} else {
 						Player[] players = Bukkit.getOnlinePlayers();
@@ -93,7 +90,6 @@ public class StockMarketDividendThread extends Thread {
 								ps = new PlayerStocks(Bukkit.getServer().getPlayer(player.getName()));
 								ps.payoutDividends();
 							} catch (SQLException e) {
-								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
 		                }
@@ -118,11 +114,4 @@ public class StockMarketDividendThread extends Thread {
 		}
 		conn.close();
 	}
-	
-	private void broadcastMessage (String message) {
-		if (StockMarket.broadcastPayouts)
-			Bukkit.getServer().broadcastMessage(ChatColor.WHITE + "[" + ChatColor.GOLD + "StockMarketPayday" + ChatColor.WHITE + "] " + ChatColor.DARK_GREEN + message);
-	}
-	
-	
 }
