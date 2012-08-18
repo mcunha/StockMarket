@@ -339,7 +339,7 @@ public class PlayerStocks {
 				// query the database for the current stock purchases
 				MySQL mysql = new MySQL();
 				Connection conn = mysql.getConn();
-				PreparedStatement stmt = conn.prepareStatement("SELECT *, amount - amount_sold as remaining FROM player_stock_transactions WHERE player = ? AND stockID = ? AND amount_sold < amount AND trxn_type = 'Buy' ORDER BY id");
+				PreparedStatement stmt = conn.prepareStatement("SELECT stockID, price, SUM(amount) as total_amount, SUM(amount_sold) as total_amount_sold, SUM(amount - amount_sold) as total_amount_remaining FROM player_stock_transactions WHERE player = ? AND stockID = ? AND amount_sold < amount AND trxn_type = 'Buy' GROUP BY stockID, price");
 				try {
 					stmt.setString(1, player.getName());
 					stmt.setString(2, ps.stock.getID());
@@ -351,8 +351,8 @@ public class PlayerStocks {
 					while (result.next()) {
 						
 						double purch_price = result.getDouble("price");
-						int purch_amount = result.getInt("amount");
-						int remaining_amount = result.getInt("remaining");
+						int purch_amount = result.getInt("total_amount");
+						int remaining_amount = result.getInt("total_amount_remaining");
 						
 						double stock_diff = (ps.stock.getPrice() - purch_price);
 						String diff = diffFormat.format( stock_diff );
