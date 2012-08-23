@@ -42,51 +42,55 @@ public class PlayerStocks {
 		// FIND THIS PLAYER IN THE DB, FILL IN HIS INFO
 		MySQL mysql = new MySQL();
 		Connection conn = mysql.getConn();
-		// NOW LETS FIND EM
-		PreparedStatement stmt = conn.prepareStatement("SELECT * FROM players WHERE name LIKE ? ");
 		try {
-			stmt.setString(1, playerName);
-		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		ResultSet result = stmt.executeQuery();
-		
-		try {
-			while (result.next()) {
-				// WE FOUND IT, STORE SOME INFO
-				PreparedStatement stmt_s = conn.prepareStatement("SELECT stockID FROM stocks");
-				ResultSet result2 = stmt_s.executeQuery();
-				while (result2.next()) {
-					PlayerStock newS = new PlayerStock();
-					
-					newS.stock = new Stock(result2.getString("stockID"));
-					newS.amount = result.getInt(newS.stock.toID());
-					
-					this.stock.put(newS.stock.getID().toUpperCase(), newS);
-				}
-				
-				stmt_s.close();
-				result2.close();
-				return true;
+			// NOW LETS FIND EM
+			PreparedStatement stmt = conn.prepareStatement("SELECT * FROM players WHERE name LIKE ? ");
+			try {
+				stmt.setString(1, playerName);
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
+			ResultSet result = stmt.executeQuery();
+			
+			try {
+				while (result.next()) {
+					// WE FOUND IT, STORE SOME INFO
+					PreparedStatement stmt_s = conn.prepareStatement("SELECT stockID FROM stocks");
+					ResultSet result2 = stmt_s.executeQuery();
+					while (result2.next()) {
+						PlayerStock newS = new PlayerStock();
+						
+						newS.stock = new Stock(result2.getString("stockID"));
+						newS.amount = result.getInt(newS.stock.toID());
+						
+						this.stock.put(newS.stock.getID().toUpperCase(), newS);
+					}
+					
+					stmt_s.close();
+					result2.close();
+					return true;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			stmt.close();
+			
+			// WE DIDNT FIND IT, LETS CREATE IT
+			stmt = conn.prepareStatement("INSERT INTO players (name) Values(?)");
+			try {
+				stmt.setString(1, playerName);
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			stmt.execute();
+			stmt.close();
+		} finally {
+			if (conn != null) {
+				conn.close();
+			}
 		}
-		stmt.close();
-		
-		// WE DIDNT FIND IT, LETS CREATE IT
-		stmt = conn.prepareStatement("INSERT INTO players (name) Values(?)");
-		try {
-			stmt.setString(1, playerName);
-		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		stmt.execute();
-		stmt.close();
-		
-		conn.close();
 		return false;
 	}
 	
@@ -113,6 +117,8 @@ public class PlayerStocks {
 				// OK NOW LETS UPDATE THE DATABASE
 				MySQL mysql = new MySQL();
 				Connection conn = mysql.getConn();
+				try {
+					
 				PreparedStatement stmt = conn.prepareStatement("UPDATE players SET " + stock.getID() + " = ? WHERE name LIKE ?");
 				try {
 					stmt.setInt(1, this.stock.get(stock.getID()).amount);
@@ -211,8 +217,11 @@ public class PlayerStocks {
 					stmt.close();
 				}
 				
-				
-				conn.close();
+				} finally {
+					if (conn != null) {
+						conn.close();
+					}
+				}
 				
 				StockMarket.economy.depositPlayer(player.getName(), amount * stock.getPrice());
 				m.successMessage("Successfully sold " + amount + " " + stock + " stocks for " + stock.getPrice() + " " + StockMarket.economy.currencyNamePlural() + " each.");
@@ -253,39 +262,11 @@ public class PlayerStocks {
 				// OK NOW LETS UPDATE THE DATABASE
 				MySQL mysql = new MySQL();
 				Connection conn = mysql.getConn();
-				PreparedStatement stmt = conn.prepareStatement("UPDATE players SET " + stock.getID() + " = ? WHERE name LIKE ?");
 				try {
-					stmt.setInt(1, this.stock.get(stock.getID()).amount);
-					stmt.setString(2, player.getName());
-				} catch (SQLException e) {
-					e.printStackTrace();
-					return false;
-				}
-				
-				stmt.execute();
-				stmt.close();
-				
-				// STORE THE BUY PRICE TRANSACTION
-				stmt = conn.prepareStatement("INSERT INTO player_stock_transactions (player, stockID, trxn_type, price, amount, amount_sold) VALUES (?, ?, 'Buy', ?, ?, 0)");
-				try {
-					stmt.setString(1, player.getName());
-					stmt.setString(2, stock.getID());
-					stmt.setDouble(3, stock.getPrice());
-					stmt.setInt(4, amount);
-				} catch (SQLException e) {
-					e.printStackTrace();
-					return false;
-				}
-				
-				stmt.execute();
-				stmt.close();
-				
-				// UPDATE AMOUNT IF NOT INFINITE
-				if (stock.getAmount() != -1) {
-					stmt = conn.prepareStatement("UPDATE stocks SET amount = amount - ? WHERE StockID LIKE ?");
+					PreparedStatement stmt = conn.prepareStatement("UPDATE players SET " + stock.getID() + " = ? WHERE name LIKE ?");
 					try {
-						stmt.setInt(1, amount);
-						stmt.setString(2, stock.getID());
+						stmt.setInt(1, this.stock.get(stock.getID()).amount);
+						stmt.setString(2, player.getName());
 					} catch (SQLException e) {
 						e.printStackTrace();
 						return false;
@@ -293,9 +274,41 @@ public class PlayerStocks {
 					
 					stmt.execute();
 					stmt.close();
+					
+					// STORE THE BUY PRICE TRANSACTION
+					stmt = conn.prepareStatement("INSERT INTO player_stock_transactions (player, stockID, trxn_type, price, amount, amount_sold) VALUES (?, ?, 'Buy', ?, ?, 0)");
+					try {
+						stmt.setString(1, player.getName());
+						stmt.setString(2, stock.getID());
+						stmt.setDouble(3, stock.getPrice());
+						stmt.setInt(4, amount);
+					} catch (SQLException e) {
+						e.printStackTrace();
+						return false;
+					}
+					
+					stmt.execute();
+					stmt.close();
+					
+					// UPDATE AMOUNT IF NOT INFINITE
+					if (stock.getAmount() != -1) {
+						stmt = conn.prepareStatement("UPDATE stocks SET amount = amount - ? WHERE StockID LIKE ?");
+						try {
+							stmt.setInt(1, amount);
+							stmt.setString(2, stock.getID());
+						} catch (SQLException e) {
+							e.printStackTrace();
+							return false;
+						}
+						
+						stmt.execute();
+						stmt.close();
+					}
+				} finally {
+					if (conn != null) {
+						conn.close();
+					}
 				}
-				
-				conn.close();
 				
 				StockMarket.economy.withdrawPlayer(player.getName(), amount * stock.getPrice());
 				m.successMessage("Successfully purchased " + amount + " " + stock + " stocks for " + stock.getPrice() + " " + StockMarket.economy.currencyNamePlural() + " each.");
@@ -339,61 +352,64 @@ public class PlayerStocks {
 				// query the database for the current stock purchases
 				MySQL mysql = new MySQL();
 				Connection conn = mysql.getConn();
-				PreparedStatement stmt = conn.prepareStatement("SELECT stockID, price, SUM(amount) as total_amount, SUM(amount_sold) as total_amount_sold, SUM(amount - amount_sold) as total_amount_remaining FROM player_stock_transactions WHERE player = ? AND stockID = ? AND amount_sold < amount AND trxn_type = 'Buy' GROUP BY stockID, price");
 				try {
-					stmt.setString(1, player.getName());
-					stmt.setString(2, ps.stock.getID());
-					ResultSet result = stmt.executeQuery();
-					
-					DecimalFormat diffFormat = new DecimalFormat("#.####");
-					double total_returns = 0;
-					
-					while (result.next()) {
+					PreparedStatement stmt = conn.prepareStatement("SELECT stockID, price, SUM(amount) as total_amount, SUM(amount_sold) as total_amount_sold, SUM(amount - amount_sold) as total_amount_remaining FROM player_stock_transactions WHERE player = ? AND stockID = ? AND amount_sold < amount AND trxn_type = 'Buy' GROUP BY stockID, price");
+					try {
+						stmt.setString(1, player.getName());
+						stmt.setString(2, ps.stock.getID());
+						ResultSet result = stmt.executeQuery();
 						
-						double purch_price = result.getDouble("price");
-						int purch_amount = result.getInt("total_amount");
-						int remaining_amount = result.getInt("total_amount_remaining");
+						DecimalFormat diffFormat = new DecimalFormat("#.####");
+						double total_returns = 0;
 						
-						double stock_diff = (ps.stock.getPrice() - purch_price);
-						String diff = diffFormat.format( stock_diff );
-						double returns_price = stock_diff * purch_amount;
-						total_returns += returns_price;
-						String returns = diffFormat.format(returns_price);
-						
-						ChatColor stock_diff_color = ChatColor.RED;
-						if(stock_diff > 0){
-							stock_diff_color = ChatColor.GREEN;
-						}
+						while (result.next()) {
+							
+							double purch_price = result.getDouble("price");
+							int purch_amount = result.getInt("total_amount");
+							int remaining_amount = result.getInt("total_amount_remaining");
+							
+							double stock_diff = (ps.stock.getPrice() - purch_price);
+							String diff = diffFormat.format( stock_diff );
+							double returns_price = stock_diff * purch_amount;
+							total_returns += returns_price;
+							String returns = diffFormat.format(returns_price);
+							
+							ChatColor stock_diff_color = ChatColor.RED;
+							if(stock_diff > 0){
+								stock_diff_color = ChatColor.GREEN;
+							}
 
-						ChatColor returns_color = ChatColor.RED;
-						if(returns_price > 0){
-							returns_color = ChatColor.GREEN;
+							ChatColor returns_color = ChatColor.RED;
+							if(returns_price > 0){
+								returns_color = ChatColor.GREEN;
+							}
+							
+							chat_msg = "Bought " + remaining_amount + " at $" + ChatColor.GRAY + purch_price + ChatColor.WHITE;
+							chat_msg += " Chg: " + stock_diff_color + diff + ChatColor.WHITE + "";
+							chat_msg += " Rtrn: $" + returns_color + returns + ChatColor.WHITE;
+							
+							m.regularMessage( chat_msg );
+						
 						}
 						
-						chat_msg = "Bought " + remaining_amount + " at $" + ChatColor.GRAY + purch_price + ChatColor.WHITE;
-						chat_msg += " Chg: " + stock_diff_color + diff + ChatColor.WHITE + "";
-						chat_msg += " Rtrn: $" + returns_color + returns + ChatColor.WHITE;
+						ChatColor total_returns_color = ChatColor.RED;
+						if(total_returns > 0){
+							total_returns_color = ChatColor.GREEN;
+						}
 						
-						m.regularMessage( chat_msg );
-					
+						m.regularMessage( ChatColor.GRAY + " Total " + ps.stock.getID() + " returns: " + total_returns_color + "$" + diffFormat.format(total_returns) );
+						
+						stmt.close();
+						result.close();
+						
+					} catch (SQLException e) {
+						e.printStackTrace();
 					}
-					
-					ChatColor total_returns_color = ChatColor.RED;
-					if(total_returns > 0){
-						total_returns_color = ChatColor.GREEN;
+				} finally {
+					if (conn != null) {
+						conn.close();
 					}
-					
-					m.regularMessage( ChatColor.GRAY + " Total " + ps.stock.getID() + " returns: " + total_returns_color + "$" + diffFormat.format(total_returns) );
-					
-					stmt.close();
-					result.close();
-					
-				} catch (SQLException e) {
-					e.printStackTrace();
 				}
-				
-				conn.close();
-				
 			}
 		}
 	}
@@ -408,20 +424,25 @@ public class PlayerStocks {
 		// WE FOUND IT, STORE SOME INFO
 		MySQL mysql = new MySQL();
 		Connection conn = mysql.getConn();
-		PreparedStatement stmt = conn.prepareStatement("SELECT * FROM player_stock_transactions WHERE player = ? ORDER BY id");
 		try {
-			stmt.setString(1, player.getName());
-			ResultSet result = stmt.executeQuery();
-			while (result.next()) {
-				m.regularMessage( "("+result.getString("trxn_type")+") " + result.getInt("amount") + " " + result.getString("stockID") + " at " + newFormat.format(result.getDouble("price")) );
+			PreparedStatement stmt = conn.prepareStatement("SELECT * FROM player_stock_transactions WHERE player = ? ORDER BY id");
+			try {
+				stmt.setString(1, player.getName());
+				ResultSet result = stmt.executeQuery();
+				while (result.next()) {
+					m.regularMessage( "("+result.getString("trxn_type")+") " + result.getInt("amount") + " " + result.getString("stockID") + " at " + newFormat.format(result.getDouble("price")) );
+				}
+				result.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
-			result.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
+			
+			stmt.close();
+		} finally {
+			if (conn != null) {
+				conn.close();
+			}
 		}
-		
-		stmt.close();
-		conn.close();
 
 	}
 	

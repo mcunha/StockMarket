@@ -21,19 +21,24 @@ public class PlayerStock {
 		
 		MySQL mysql = new MySQL();
 		Connection conn = mysql.getConn();
-		PreparedStatement stmt = conn.prepareStatement("SELECT price FROM player_stock_transactions WHERE stockID = ? AND player = ? AND trxn_type = 'Buy' ORDER BY id DESC LIMIT 1");
 		try {
-			stmt.setString(1, this.stock.getID());
-			stmt.setString(2, player.getName());
-			ResultSet result = stmt.executeQuery();
-			while (result.first()) {
-				return result.getDouble("price");
+			PreparedStatement stmt = conn.prepareStatement("SELECT price FROM player_stock_transactions WHERE stockID = ? AND player = ? AND trxn_type = 'Buy' ORDER BY id DESC LIMIT 1");
+			try {
+				stmt.setString(1, this.stock.getID());
+				stmt.setString(2, player.getName());
+				ResultSet result = stmt.executeQuery();
+				while (result.first()) {
+					return result.getDouble("price");
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
+			stmt.close();
+		} finally {
+			if (conn != null) {
+				conn.close();
+			}
 		}
-		stmt.close();
-		conn.close();
 		return 0;
 		
 	}

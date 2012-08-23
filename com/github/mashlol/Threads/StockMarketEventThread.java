@@ -21,20 +21,24 @@ public class StockMarketEventThread extends Thread {
 		
 		MySQL mysql = new MySQL();
 		Connection conn = mysql.getConn();
-		PreparedStatement s = conn.prepareStatement("SELECT looptime FROM looptime");
-		ResultSet result = s.executeQuery();
-		
 		try {
-			while (result.next()) {
-				loopTimes = result.getInt("looptime");
+			PreparedStatement s = conn.prepareStatement("SELECT looptime FROM looptime");
+			ResultSet result = s.executeQuery();
+			
+			try {
+				while (result.next()) {
+					loopTimes = result.getInt("looptime");
+				}
+				s.close();
+				result.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
-			s.close();
-			result.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
+		} finally {
+			if (conn != null){
+				conn.close();
+			}
 		}
-		
-		conn.close();
 	}
 	
 	public void run() {
@@ -90,9 +94,9 @@ public class StockMarketEventThread extends Thread {
 			s.close();
 		} catch (SQLException e) {
 			
+		} finally {
+			conn.close();
 		}
-		
-		conn.close();
 	}
 	
 	

@@ -16,12 +16,16 @@ import com.github.mashlol.Stocks.Stocks;
 public class EventInstance {
 	
 
+	/*
+	 * Instance RNG once per runtime, anymore is overkill
+	 */
+	static Random randomGenerator = new Random();
+
 	/**
 	 * Gets a random number
 	 * @return
 	 */
 	public static int getRandomNumber( Integer max ){
-		Random randomGenerator = new Random();
 		return randomGenerator.nextInt(max);
 	}
 	
@@ -33,7 +37,6 @@ public class EventInstance {
 	 * @return
 	 */
 	public static int getWeightedRandomNumber( int[] data, int[] weight ){
-		Random randomGenerator = new Random();
 		int totalWeight = sum(weight);
 		int n=randomGenerator.nextInt(totalWeight);
 		int runningTotal=0;
@@ -64,7 +67,7 @@ public class EventInstance {
         }
 
         // Choose a random item
-        double rand = Math.random();
+        double rand = randomGenerator.nextDouble();
         double r = rand * completeWeight;
 
         double countWeight = 0.0;
