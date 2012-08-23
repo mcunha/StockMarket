@@ -59,27 +59,33 @@ public class StockMarketDividendThread extends Thread {
 					if (StockMarket.payOffline == true) {
 						MySQL mysql = new MySQL();
 						Connection conn = mysql.getConn();
-						PreparedStatement s;
 						try {
-							s = conn.prepareStatement("SELECT name FROM players");
-							ResultSet result = s.executeQuery();
+							PreparedStatement s;
 							try {
-								while (result.next()) {
-									String playerName = result.getString("name");
-									Player p = Bukkit.getServer().getPlayer(playerName);
-									PlayerStocks ps;
-									if (p != null)
-										 ps = new PlayerStocks(p);
-									else
-										ps = new PlayerStocks(playerName);
-										ps.payoutDividends();
+								s = conn.prepareStatement("SELECT name FROM players");
+								ResultSet result = s.executeQuery();
+								try {
+									while (result.next()) {
+										String playerName = result.getString("name");
+										Player p = Bukkit.getServer().getPlayer(playerName);
+										PlayerStocks ps;
+										if (p != null)
+											 ps = new PlayerStocks(p);
+										else
+											ps = new PlayerStocks(playerName);
+											ps.payoutDividends();
+									}
+								} catch (SQLException e) {
+									
 								}
-							} catch (SQLException e) {
-								
+							} catch (SQLException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
 							}
-						} catch (SQLException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
+						} finally {
+							if (conn != null) {
+								conn.close();
+							}
 						}
 						
 						

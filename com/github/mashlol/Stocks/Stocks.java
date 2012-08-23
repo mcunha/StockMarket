@@ -18,20 +18,24 @@ public class Stocks {
 
 		MySQL mysql = new MySQL();
 		Connection conn = mysql.getConn();
-		
-		PreparedStatement stmt = conn.prepareStatement("SELECT stockID FROM stocks");
-		ResultSet result = stmt.executeQuery();
 		try {
-			while (result.next()) {
-				stock.add(new Stock(result.getString("stockID")));
+			PreparedStatement stmt = conn.prepareStatement("SELECT stockID FROM stocks");
+			ResultSet result = stmt.executeQuery();
+			try {
+				while (result.next()) {
+					stock.add(new Stock(result.getString("stockID")));
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
+			
+			result.close();
+			stmt.close();
+		} finally {
+			if (conn != null) {
+				conn.close();
+			}
 		}
-		
-		result.close();
-		stmt.close();
-		conn.close();
 	}
 	
 	public Stock getRandomStock () {
