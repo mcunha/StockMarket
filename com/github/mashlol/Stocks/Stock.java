@@ -224,6 +224,98 @@ public class Stock {
 		
 		return true;
 	}
+
+	/**
+	 * Counts the number of shares currently held by players 
+	 * as well as still available for purchase
+	 *
+	 * @return number of shares issued
+	 */
+	public int getIssuedShares() throws SQLException {
+		int playerShares=0;
+		MySQL mysql = new MySQL();
+		Connection conn = mysql.getConn();
+		PreparedStatement stmt = conn.prepareStatement("SELECT SUM(amount-amount_sold) as shares_held FROM player_stock_transactionsstocks WHERE StockID LIKE ? AND trxn_type = 'Buy' AND amount_sold < amount");
+		try {
+			try {
+				stmt.setString(1, stockID);
+			} catch (SQLException e) {
+				e.printStackTrace();
+				return 0;
+			}
+			
+			ResultSet result = stmt.executeQuery();
+			try {
+				try {
+					// Should have a single row if there are any shares being held by players
+					if (result.next()) {
+						playerShares = result.getInt("shares_held");
+					}
+				} catch (SQLException e) {
+					e.printStackTrace();
+					throw e;
+				}
+			}
+			finally {
+				stmt.close();
+				result.close();
+			}
+		} finally {
+			conn.close();
+		}
+
+		// Include currently outstanding shares
+		return amount + playerShares;
+	}
+
+	/**
+	 * Dilutes the stock by issuing new shares at a given price. If the price per share for
+	 * the extra shares is zero, it works almost like a split, except is doesn't award
+	 * new shares to shareholders, thus diluting their position severely.
+	 *
+	 * @param  extraShares Number of new shares being added.
+	 * @param  extraSharePps Price per share of the additional shares.
+	 * @return true if successful, false otherwise.
+	 */
+ 	public boolean dilute (int extraShares, double extraSharePps) throws SQLException {
+ 		int originalShares = 0;
+ 		try {
+ 			originalShares = this.getIssuedShares();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+
+ 		// Calculate new price as follows:
+ 		// Overall Stock Valuation = (Original Number of Shares * Current Price) + (Extra Shares * Extra Share Price)
+ 		// New Share Pool Size = Original Number of Shares + Extra Shares
+ 		// New share price = Overall Stock Valuation / New Share Pool Size
+ 		double stockValuation = (originalShares*price)+(extraShares*extraSharePps);
+ 		double newSharePrice = stockValuation/((double)(originalShares+extraShares));
+
+ 		// Update database with new share price, and amount of outstanding shares
+ 		// NOTE: We don't distribute stock to players
+		MySQL mysql = new MySQL();
+		Connection conn = mysql.getConn();
+		PreparedStatement stmt = conn.prepareStatement("UPDATE stocks SET price = ?, amount = ? WHERE StockID LIKE ?");
+		try {
+			try {
+				stmt.setDouble(1, newSharePrice);
+				stmt.setInt(2, amount+extraShares);
+				stmt.setString(3, stockID);
+			} catch (SQLException e) {
+				e.printStackTrace();
+				return false;
+			}
+			
+			stmt.execute();
+			stmt.close();
+		} finally {
+			conn.close();
+		}
+		
+		return true;
+	}
 	
 	public boolean remove () throws SQLException {
 		MySQL mysql = new MySQL();
