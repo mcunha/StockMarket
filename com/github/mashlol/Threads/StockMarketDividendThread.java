@@ -84,7 +84,12 @@ public class StockMarketDividendThread extends Thread {
 							}
 						} finally {
 							if (conn != null) {
-								conn.close();
+								try {
+									conn.close();
+								} catch (SQLException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
 							}
 						}
 						
