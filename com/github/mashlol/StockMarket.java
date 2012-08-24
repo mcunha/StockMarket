@@ -102,11 +102,11 @@ public class StockMarket extends JavaPlugin {
 		getConfig().options().copyDefaults(true);
 		saveConfig();
 		
-		mysqlIP = getConfig().getString("mysql.ip");
-		mysqlPort = getConfig().getString("mysql.port");
-		mysqlDB = getConfig().getString("mysql.database");
-		mysqlUser = getConfig().getString("mysql.username");
-		mysqlPW = getConfig().getString("mysql.password");
+		mysqlIP = getConfig().getString("mysql.ip", mysqlIP);
+		mysqlPort = getConfig().getString("mysql.port", mysqlPort);
+		mysqlDB = getConfig().getString("mysql.database", mysqlDB);
+		mysqlUser = getConfig().getString("mysql.username", mysqlUser);
+		mysqlPW = getConfig().getString("mysql.password", mysqlPW);
 		
 		dividendFreq = getConfig().getInt("dividend-frequency");
 		randomEventFreq = getConfig().getInt("random-event-frequency");
