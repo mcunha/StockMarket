@@ -127,7 +127,7 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 					}
 				}
 				
-				if (amount > 0) {
+				if (amount <= 0) {
 					m.errorMessage("Invalid amount.");
 					return true;
 				}
