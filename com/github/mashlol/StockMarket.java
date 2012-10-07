@@ -112,7 +112,6 @@ public class StockMarket extends JavaPlugin {
 	
 	public void loadConfiguration() {
 		getConfig().options().copyDefaults(true);
-		saveConfig();
 		
 		mysqlIP = getConfig().getString("mysql.ip", mysqlIP);
 		mysqlPort = getConfig().getString("mysql.port", mysqlPort);
@@ -129,6 +128,8 @@ public class StockMarket extends JavaPlugin {
 		
 		broadcastEvents = getConfig().getBoolean("broadcast-events");
 		broadcastPayouts = getConfig().getBoolean("broadcast-payouts");
+
+		saveConfig();
 		
 		// LOAD EVENTS
 		events.clear();
