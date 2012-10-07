@@ -63,7 +63,6 @@ public class StockMarketEventThread extends Thread {
 				ei.forceRandomEvent(ctx, stock);
 			}
 		} catch (InterruptedException e) {
-			e.printStackTrace();
 			return;
 		}
 	}
