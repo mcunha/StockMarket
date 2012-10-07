@@ -1,6 +1,5 @@
 package com.github.mashlol.Stocks;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -11,7 +10,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import com.github.mashlol.DBContext;
-import com.github.mashlol.MySQL;
 import com.github.mashlol.StockMarket;
 import com.github.mashlol.Messages.Message;
 
@@ -22,7 +20,7 @@ public class PlayerStocks {
 	private boolean exists;
 	private String playerName;
 	
-	protected PlayerStocks (DBContext ctx, Player player) {
+	public PlayerStocks (DBContext ctx, Player player) {
 		this.player = player;
 		if (player != null)
 			this.playerName = player.getName();
@@ -32,7 +30,7 @@ public class PlayerStocks {
 		exists = getPlayerInfo(ctx);
 	}
 	
-	protected PlayerStocks (DBContext ctx, String playerName) {
+	public PlayerStocks (DBContext ctx, String playerName) {
 		this.player = null;
 		this.playerName = playerName;
 		

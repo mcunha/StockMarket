@@ -1,15 +1,10 @@
 package com.github.mashlol;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class DBContext {
 	private ConnectionManager readWriteConnections;
@@ -253,7 +248,7 @@ public class DBContext {
 		readOnlyConnections.close();
 	}
 
-	private void setUpTables() {
+//	private void setUpTables() {
 //		try {
 //			execute("CREATE TABLE IF NOT EXISTS stocks (id int NOT NULL AUTO_INCREMENT, PRIMARY KEY(id), name tinytext, stockID tinytext, price decimal(10, 2), basePrice decimal(10, 2), maxPrice decimal(10, 2), minPrice decimal(10, 2), volatility decimal(10, 2), amount int, dividend decimal(10, 2))");
 //			execute("CREATE TABLE IF NOT EXISTS players (id int NOT NULL AUTO_INCREMENT, PRIMARY KEY(id), name tinytext)");
@@ -293,5 +288,5 @@ public class DBContext {
 //			} catch (SQLException e) {
 //				// DO NOTHING
 //			}
-	}
+//	}
 }

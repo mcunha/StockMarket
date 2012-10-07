@@ -1,6 +1,5 @@
 package com.github.mashlol.Stocks;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -8,7 +7,6 @@ import java.sql.SQLException;
 import org.bukkit.entity.Player;
 
 import com.github.mashlol.DBContext;
-import com.github.mashlol.MySQL;
 
 public class PlayerStock {
 

@@ -1,6 +1,5 @@
 package com.github.mashlol;
  
-import java.sql.SQLException;
 import java.util.Vector;
 import java.util.logging.Logger;
 

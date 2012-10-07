@@ -1,7 +1,5 @@
 package com.github.mashlol;
 
-import java.sql.SQLException;
-
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -82,7 +80,7 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 				// LIST ALL THE STOCKS THIS PLAYER CAN BUY
 				PlayerStocks ps = null;
 				ps = new PlayerStocks(plugin.dbContext, player);
-				ps.listAll(plugin.dbContext);
+				ps.listAll();
 				
 			/**
 			 * /sm buy
