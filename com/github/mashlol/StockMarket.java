@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -111,23 +112,41 @@ public class StockMarket extends JavaPlugin {
 	}
 	
 	public void loadConfiguration() {
-		getConfig().options().copyDefaults(true);
+		FileConfiguration config = getConfig();
 		
-		mysqlIP = getConfig().getString("mysql.ip", mysqlIP);
-		mysqlPort = getConfig().getString("mysql.port", mysqlPort);
-		mysqlDB = getConfig().getString("mysql.database", mysqlDB);
-		mysqlUser = getConfig().getString("mysql.username", mysqlUser);
-		mysqlPW = getConfig().getString("mysql.password", mysqlPW);
+		config.options().copyDefaults(true);
 		
-		dividendFreq = getConfig().getInt("dividend-frequency");
-		randomEventFreq = getConfig().getInt("random-event-frequency");
-		maxPerPlayer = getConfig().getInt("max-total-stocks-per-player");
-		maxPerPlayerPerStock = getConfig().getInt("max-total-stocks-per-player-per-stock");
+		config.addDefault("mysql.ip", mysqlIP);
+		config.addDefault("mysql.port", mysqlPort);
+		config.addDefault("mysql.database", mysqlDB);
+		config.addDefault("mysql.username", mysqlUser);
+		config.addDefault("mysql.password", mysqlPW);
 		
-		payOffline = getConfig().getBoolean("pay-offline-players");
+		config.addDefault("dividend-frequency", dividendFreq);
+		config.addDefault("random-event-frequency", randomEventFreq);
+		config.addDefault("max-total-stocks-per-player", maxPerPlayer);
+		config.addDefault("max-total-stocks-per-player-per-stock", maxPerPlayerPerStock);
 		
-		broadcastEvents = getConfig().getBoolean("broadcast-events");
-		broadcastPayouts = getConfig().getBoolean("broadcast-payouts");
+		config.addDefault("pay-offline-players", payOffline);
+		
+		config.addDefault("broadcast-events", broadcastEvents);
+		config.addDefault("broadcast-payouts", broadcastPayouts);
+		
+		mysqlIP = config.getString("mysql.ip");
+		mysqlPort = config.getString("mysql.port");
+		mysqlDB = config.getString("mysql.database");
+		mysqlUser = config.getString("mysql.username");
+		mysqlPW = config.getString("mysql.password");
+		
+		dividendFreq = config.getInt("dividend-frequency");
+		randomEventFreq = config.getInt("random-event-frequency");
+		maxPerPlayer = config.getInt("max-total-stocks-per-player");
+		maxPerPlayerPerStock = config.getInt("max-total-stocks-per-player-per-stock");
+		
+		payOffline = config.getBoolean("pay-offline-players");
+		
+		broadcastEvents = config.getBoolean("broadcast-events");
+		broadcastPayouts = config.getBoolean("broadcast-payouts");
 
 		saveConfig();
 		
