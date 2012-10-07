@@ -5,7 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.github.mashlol.MySQL;
+import com.github.mashlol.DBContext;
 import com.github.mashlol.StockMarket;
 import com.github.mashlol.Events.EventInstance;
 import com.github.mashlol.Stocks.Stock;
@@ -15,89 +15,67 @@ public class StockMarketEventThread extends Thread {
 
 	private boolean loop = true;
 	private int loopTimes = 0;
+	private DBContext ctx = null;
 	
-	public StockMarketEventThread () throws SQLException{
+	public StockMarketEventThread () {
 		super ("StockMarketEventThread");
 		
-		MySQL mysql = new MySQL();
-		Connection conn = mysql.getConn();
+		ctx = new DBContext();
+		
+		ResultSet result = null;
 		try {
-			PreparedStatement s = conn.prepareStatement("SELECT looptime FROM looptime");
-			ResultSet result = s.executeQuery();
-			
-			try {
-				while (result.next()) {
-					loopTimes = result.getInt("looptime");
-				}
-				s.close();
-				result.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
+			result = ctx.executeQueryRead("SELECT looptime FROM looptime");
+			while (result.next()) {
+				loopTimes = result.getInt("looptime");
 			}
+		} catch (SQLException e) {
+			e.printStackTrace();
 		} finally {
-			if (conn != null){
-				conn.close();
-			}
+			ctx.close(result);
 		}
 	}
 	
 	public void run() {
-		if (StockMarket.randomEventFreq == 0)
-			loop = false;
-		while (loop) {
-			// SLEEP
-			try {
+		try {
+			if (StockMarket.randomEventFreq == 0)
+				loop = false;
+			
+			while (loop) {
+				
+				// SLEEP
 				Thread.sleep(60000); // THIS DELAY COULD BE CONFIG'D
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			
-			if (loop) {
-			
+				
+				if (!loop) break;
 				loopTimes++;
 	
 				// DO SOME EVENT STUFF
 				
-				if (loopTimes % StockMarket.randomEventFreq == 0) {
-					loopTimes = 0;
-					Stocks stocks = null;
-					try {
-						stocks = new Stocks();
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					
-					if (stocks != null && stocks.numStocks() > 0) {
-						Stock stock = stocks.getRandomStock();
-						EventInstance ei = new EventInstance();
-						try {
-							ei.forceRandomEvent(stock);
-						} catch (SQLException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-				}
+				if (loopTimes % StockMarket.randomEventFreq != 0) continue;
+				
+				loopTimes = 0;
+				Stocks stocks = null;
+				stocks = new Stocks(ctx);
+				
+				if (stocks.numStocks() == 0) continue;
+				
+				Stock stock = stocks.getRandomStock();
+				EventInstance ei = new EventInstance();
+				ei.forceRandomEvent(ctx, stock);
 			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			return;
 		}
 	}
 	
-	public void finish() throws SQLException {
+	public void finish()  {
 		loop = false;
-		
-		MySQL mysql = new MySQL();
-		Connection conn = mysql.getConn();
+		this.interrupt();
 		try {
-			PreparedStatement s = conn.prepareStatement("UPDATE looptime SET looptime = " + loopTimes);
-			s.execute();
-			s.close();
-		} catch (SQLException e) {
-			
-		} finally {
-			conn.close();
+			this.join(5000);
+		} catch (InterruptedException e) {
 		}
+		ctx.executeUpdate("UPDATE looptime SET looptime = " + loopTimes);
+		ctx.close();
 	}
-	
-	
 }

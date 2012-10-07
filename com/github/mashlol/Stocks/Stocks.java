@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Random;
 
+import com.github.mashlol.DBContext;
 import com.github.mashlol.MySQL;
 
 public class Stocks {
@@ -14,27 +15,19 @@ public class Stocks {
 	private ArrayList<Stock> stock = new ArrayList<Stock>();
 	private Random random = new Random();
 	
-	public Stocks () throws SQLException {
-
-		MySQL mysql = new MySQL();
-		Connection conn = mysql.getConn();
+	public Stocks (DBContext ctx) {
+		ResultSet result=null;
 		try {
-			PreparedStatement stmt = conn.prepareStatement("SELECT stockID FROM stocks");
-			ResultSet result = stmt.executeQuery();
-			try {
+			result = ctx.executeQueryRead("SELECT stockID FROM stocks");
+			if (result != null) {
 				while (result.next()) {
-					stock.add(new Stock(result.getString("stockID")));
+					stock.add(new Stock(ctx, result.getString("stockID")));
 				}
-			} catch (SQLException e) {
-				e.printStackTrace();
 			}
-			
-			result.close();
-			stmt.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
 		} finally {
-			if (conn != null) {
-				conn.close();
-			}
+			ctx.close(result);
 		}
 	}
 	

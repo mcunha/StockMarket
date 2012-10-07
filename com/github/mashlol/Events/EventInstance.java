@@ -9,6 +9,7 @@ import java.util.Random;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 
+import com.github.mashlol.DBContext;
 import com.github.mashlol.StockMarket;
 import com.github.mashlol.Stocks.Stock;
 import com.github.mashlol.Stocks.Stocks;
@@ -85,21 +86,20 @@ public class EventInstance {
 	 * 
 	 * @param s
 	 * @return
-	 * @throws SQLException 
 	 */
-	public boolean forceRandomEvent(Stock s) throws SQLException {
+	public boolean forceRandomEvent(DBContext ctx, Stock s) {
 		
 		int rnum = getRandomNumber(2000);
 		if(rnum == 3){
 			
 			// Stock market crash
-			Stocks st = new Stocks();
+			Stocks st = new Stocks(ctx);
 			ArrayList<Stock> stocks = st.getStocks();
 
 			Iterator<Stock> itr = stocks.iterator();
 			while(itr.hasNext()){
 				Stock s_temp = itr.next();
-				s_temp.changePrice( s_temp.getMarketCrashPriceChange() );
+				s_temp.changePrice( ctx, s_temp.getMarketCrashPriceChange() );
 			}
 			broadcastMessage( "STOCK MARKET CRASH! All stocks lose 75% of value... market in shambles..." );
 			
@@ -107,13 +107,13 @@ public class EventInstance {
 		else if(rnum == 22){
 			
 			// Stock market bubble
-			Stocks st = new Stocks();
+			Stocks st = new Stocks(ctx);
 			ArrayList<Stock> stocks = st.getStocks();
 
 			Iterator<Stock> itr = stocks.iterator();
 			while(itr.hasNext()){
 				Stock s_temp = itr.next();
-				s_temp.changePrice( s_temp.getMarketBubblePriceChange() );
+				s_temp.changePrice( ctx, s_temp.getMarketBubblePriceChange() );
 			}
 			broadcastMessage( "STOCKS SURGE WITH TECH BUBBLE! All stocks increase by 25% of value..." );
 			
@@ -131,7 +131,7 @@ public class EventInstance {
 			}
 			
 			broadcastMessage( e.getMessage().replaceAll("%s", s.getID()) + " CHG: " + chg_msg );
-			s.changePrice(price_change);
+			s.changePrice(ctx, price_change);
 			
 		}
 		return true;

@@ -7,6 +7,7 @@ import java.sql.SQLException;
 
 import org.bukkit.entity.Player;
 
+import com.github.mashlol.DBContext;
 import com.github.mashlol.MySQL;
 
 public class PlayerStock {
@@ -14,33 +15,26 @@ public class PlayerStock {
 	public Stock stock;
 	public int amount;
 	
-	
-	
-	public double getPurchasePrice(Player player) throws SQLException{
-		
-		
-		MySQL mysql = new MySQL();
-		Connection conn = mysql.getConn();
+	public double getPurchasePrice(DBContext ctx, Player player) {
+		PreparedStatement stmt = null;
+		ResultSet result = null;
 		try {
-			PreparedStatement stmt = conn.prepareStatement("SELECT price FROM player_stock_transactions WHERE stockID = ? AND player = ? AND trxn_type = 'Buy' ORDER BY id DESC LIMIT 1");
-			try {
-				stmt.setString(1, this.stock.getID());
-				stmt.setString(2, player.getName());
-				ResultSet result = stmt.executeQuery();
+			stmt = ctx.PrepareStatementRead("SELECT price FROM player_stock_transactions WHERE stockID = ? AND player = ? AND trxn_type = 'Buy' ORDER BY id DESC LIMIT 1");
+			stmt.setString(1, this.stock.getID());
+			stmt.setString(2, player.getName());
+			result = ctx.executeQuery(stmt);
+			if (result != null) {
 				while (result.first()) {
 					return result.getDouble("price");
 				}
-			} catch (SQLException e) {
-				e.printStackTrace();
 			}
-			stmt.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
 		} finally {
-			if (conn != null) {
-				conn.close();
-			}
+			ctx.close(result);
+			ctx.close(stmt);
 		}
 		return 0;
-		
 	}
 	
 }

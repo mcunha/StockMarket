@@ -44,17 +44,17 @@ public class StockMarket extends JavaPlugin {
 	private Logger log = Logger.getLogger("Minecraft");
 	private StockMarketEventThread e;
 	private StockMarketDividendThread d;
+	public DBContext dbContext = null;
 	
 	public void onDisable() {
-		try {
+		if (e != null) {
 			e.finish();
-			d.finish();
-		} catch (NullPointerException e) {
-			System.out.println("[StockMarket] A StockMarket thread never started!");
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
+		if (d != null) {
+			d.finish();
+		}
+		
+		dbContext.close();
 	}
 
 	public void onEnable() {
@@ -80,21 +80,34 @@ public class StockMarket extends JavaPlugin {
 		initCommands();
 		
 		loadConfiguration();
-		
-		try {
-			e = new StockMarketEventThread();
-		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+
+		dbContext = new DBContext();
+
+		e = new StockMarketEventThread();
 		e.start();
 		
-		try {
-			d = new StockMarketDividendThread();
-		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+		d = new StockMarketDividendThread();
+		d.start();
+	}
+	
+	public void reload() {
+		if (e != null) {
+			e.finish();
 		}
+		if (d != null) {
+			d.finish();
+		}
+		
+		dbContext.close();
+		
+		loadConfiguration();
+		
+		dbContext = new DBContext();
+
+		e = new StockMarketEventThread();
+		e.start();
+		
+		d = new StockMarketDividendThread();
 		d.start();
 	}
 	

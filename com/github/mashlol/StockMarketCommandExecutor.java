@@ -62,17 +62,8 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 			 */
 			} else if (args.length >= 2 && args[0].equalsIgnoreCase("list") && args[1].equalsIgnoreCase("mine") && player != null && StockMarket.permission.has(player, "stockmarket.user.list")) {
 				PlayerStocks ps = null;
-				try {
-					ps = new PlayerStocks(player);
-				} catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				try {
-					ps.listMine();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
+				ps = new PlayerStocks(plugin.dbContext, player);
+				ps.listMine(plugin.dbContext);
 				
 			/**
 			 * /sm list history
@@ -80,17 +71,8 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 			 */
 			} else if (args.length >= 2 && args[0].equalsIgnoreCase("list") && args[1].equalsIgnoreCase("history") && player != null && StockMarket.permission.has(player, "stockmarket.user.list")) {
 				PlayerStocks ps = null;
-				try {
-					ps = new PlayerStocks(player);
-				} catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				try {
-					ps.listHistory();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
+				ps = new PlayerStocks(plugin.dbContext, player);
+				ps.listHistory(plugin.dbContext);
 				
 			/**
 			 * /sm list
@@ -99,13 +81,8 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 			} else if (args.length >= 1 && args[0].equalsIgnoreCase("list") && (player == null || StockMarket.permission.has(player, "stockmarket.user.list"))) {
 				// LIST ALL THE STOCKS THIS PLAYER CAN BUY
 				PlayerStocks ps = null;
-				try {
-					ps = new PlayerStocks(player);
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				ps.listAll();
+				ps = new PlayerStocks(plugin.dbContext, player);
+				ps.listAll(plugin.dbContext);
 				
 			/**
 			 * /sm buy
@@ -113,12 +90,7 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 			 */
 			} else if (args.length >= 2 && args[0].equalsIgnoreCase("buy") && player != null && StockMarket.permission.has(player, "stockmarket.user.buy")) {
 				Stock stock = null;
-				try {
-					stock = new Stock(args[1].toUpperCase());
-				} catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+				stock = new Stock(plugin.dbContext, args[1].toUpperCase());
 				int amount = 1;
 				
 				if (args.length == 3) {
@@ -130,23 +102,14 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 					}
 				}
 				
-				if (amount > 0) {
-					PlayerStocks ps = null;
-					try {
-						ps = new PlayerStocks(player);
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					try {
-						ps.buy(stock, amount);
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				} else {
+				if (amount <= 0) {
 					m.errorMessage("Invalid amount.");
+					return true;
 				}
+				
+				PlayerStocks ps = null;
+				ps = new PlayerStocks(plugin.dbContext, player);
+				ps.buy(plugin.dbContext, stock, amount);
 				
 			/**
 			 * /sm sell
@@ -154,12 +117,7 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 			 */
 			} else if (args.length >= 2 && args[0].equalsIgnoreCase("sell") && player != null && StockMarket.permission.has(player, "stockmarket.user.sell")) {
 				Stock stock = null;
-				try {
-					stock = new Stock(args[1].toUpperCase());
-				} catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+				stock = new Stock(plugin.dbContext, args[1].toUpperCase());
 				int amount = 1;
 				
 				if (args.length == 3) {
@@ -172,22 +130,13 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 				}
 				
 				if (amount > 0) {
-					PlayerStocks ps = null;
-					try {
-						ps = new PlayerStocks(player);
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					try {
-						ps.sell(stock, amount);
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				} else {
 					m.errorMessage("Invalid amount.");
+					return true;
 				}
+				
+				PlayerStocks ps = null;
+				ps = new PlayerStocks(plugin.dbContext, player);
+				ps.sell(plugin.dbContext, stock, amount);
 				
 			/**
 			 * /sm add
@@ -225,27 +174,17 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 				}
 				
 				Stock stock = null;
-				try {
-					stock = new Stock(stockID);
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-						
-				if (stock != null && !stock.exists()) {
-					try {
-						if (stock.add(name, stockID, baseprice, maxprice, minprice, volatility, amount, dividend))
-							m.successMessage("Successfully created new stock.");
-						else
-							m.errorMessage("Failed to create new stock.  Make sure the ID was valid.");
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				} else {
+				stock = new Stock(plugin.dbContext, stockID);
+				
+				if (stock.exists()) {
 					m.errorMessage("A stock with that ID already exists!");
 					return true;
 				}
+				
+				if (stock.add(plugin.dbContext, name, stockID, baseprice, maxprice, minprice, volatility, amount, dividend))
+					m.successMessage("Successfully created new stock.");
+				else
+					m.errorMessage("Failed to create new stock.");
 				
 			/**
 			 * /sm remove
@@ -255,26 +194,16 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 				String stockID = args[1];
 				
 				Stock stock = null;
-				try {
-					stock = new Stock(stockID);
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				stock = new Stock(plugin.dbContext, stockID);
 				
-				if (stock != null && stock.exists()) {
-					try {
-						stock.remove();
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					
-					m.successMessage("Successfully removed that stock.");
-				} else {
+				if (!stock.exists()) {
 					m.errorMessage("That stock does not exist.");
 					return true;
 				}
+
+				stock.remove(plugin.dbContext);
+				m.successMessage("Successfully removed that stock.");
+				
 			} else if (args.length >= 8 && args[0].equalsIgnoreCase("set") && (player == null || StockMarket.permission.has(player, "stockmarket.admin.set"))){
 				final String stockID = args[1];
 				final double baseprice;
@@ -307,22 +236,17 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 				}
 				
 				Stock stock = null;
-				try {
-					stock = new Stock(stockID);
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				stock = new Stock(plugin.dbContext, stockID);
 						
-				try {
-					if (stock != null && stock.set(name, stockID, baseprice, maxprice, minprice, volatility, amount, dividend))
-						m.successMessage("Successfully adjusted stock.");
-					else
-						m.errorMessage("Failed to adjust stock.  Make sure the ID was valid.");
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				if (!stock.exists()) {
+					m.errorMessage("Failed to adjust stock.  Make sure the ID was valid.");
+					return true;
 				}
+
+				if (stock.set(plugin.dbContext, name, stockID, baseprice, maxprice, minprice, volatility, amount, dividend))
+					m.successMessage("Successfully adjusted stock.");
+				else
+					m.errorMessage("Failed to adjust stock.  Make sure the ID was valid.");
 				
 			/**
 			 * /sm addshares
@@ -360,71 +284,53 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 				}
 
 				Stock stock = null;
-				try {
-					stock = new Stock(stockID);
-				} catch (SQLException e) {
-					e.printStackTrace();
+				stock = new Stock(plugin.dbContext, stockID);
+				
+				if (!stock.exists()) {
 					m.errorMessage("Failed to adjust stock.  Make sure the ID was valid.");
 					return true;
 				}
 						
-				try {
-					if (stock.dilute(extraAmount, extraSharePps))
-						m.successMessage("Successfully added shares to stock.");
-					else
-						m.errorMessage("Failed to adjust stock.  Error while diluting stock.");
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
+				if (stock.dilute(plugin.dbContext, extraAmount, extraSharePps))
+					m.successMessage("Successfully added shares to stock.");
+				else
+					m.errorMessage("Error while diluting stock.");
 			} else if (args.length == 1 && args[0].equalsIgnoreCase("reload") && (player == null || StockMarket.permission.has(player, "stockmarket.admin.reload"))) { 
 				plugin.reloadConfig();
-				plugin.loadConfiguration();
+				plugin.reload();
 				m.successMessage("Successfully reloaded StockMarket.");
 			}  else if (args.length == 1 && args[0].equalsIgnoreCase("forcerandom") && (player == null || StockMarket.permission.has(player, "stockmarket.admin.event"))) {
 				Stocks s = null;
-				try {
-					s = new Stocks();
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				if (s != null && s.numStocks() > 0) {
+				s = new Stocks(plugin.dbContext);
+				if (s.numStocks() > 0) {
 					EventInstance ei = new EventInstance();
-					try {
-						ei.forceRandomEvent(s.getRandomStock());
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					ei.forceRandomEvent(plugin.dbContext, s.getRandomStock());
 				}
 			} else if (args.length == 1 && (player == null || StockMarket.permission.has(player, "stockmarket.user.detail"))) {
 				// CHECK IF THIS IS A STOCK NAME
 				String stockID = args[0];
 				
 				Stock stock = null;
-				try {
-					stock = new Stock(stockID);
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				stock = new Stock(plugin.dbContext, stockID);
 				
-				if (stock != null && stock.exists()) {
-					m.successMessage(stock.toString());
-					m.regularMessage("Current Price: " + stock.getPrice());
-					
-					// BASE SHOULD ONLY DISPLAY FOR A SPECIAL PERMISSION NODE
-					if (player == null || StockMarket.permission.has(player, "stockmarket.admin.baseprice"))
-						m.regularMessage("Base Price: " + stock.getBasePrice());
-					m.regularMessage("Dividend: " + stock.getDividend() + "% per stock.");
-					if (stock.getAmount() != -1) 
-						m.regularMessage("Current Amount: " + stock.getAmount());
-					else
-						m.regularMessage("Current Amount: Infinite");
-				} else {
+				if (!stock.exists()) {
 					m.unknownCommand();
 					return true;
 				}
+				
+				m.successMessage(stock.toString());
+				m.regularMessage("Current Price: " + stock.getPrice());
+				
+				// BASE SHOULD ONLY DISPLAY FOR A SPECIAL PERMISSION NODE
+				if (player == null || StockMarket.permission.has(player, "stockmarket.admin.baseprice"))
+					m.regularMessage("Base Price: " + stock.getBasePrice());
+				m.regularMessage("Dividend: " + stock.getDividend() + "% per stock.");
+				
+				if (stock.getAmount() != -1) 
+					m.regularMessage("Current Amount: " + stock.getAmount());
+				else
+					m.regularMessage("Current Amount: Infinite");
+				
 			} else if (args.length > 0){
 				// UNKNOWN COMMAND
 				m.unknownCommand();
@@ -433,8 +339,6 @@ public class StockMarketCommandExecutor implements CommandExecutor {
 			}
 		}
 		
-		
 		return true;
 	}
-	
 }

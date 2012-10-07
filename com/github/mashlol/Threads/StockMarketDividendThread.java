@@ -9,7 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
-import com.github.mashlol.MySQL;
+import com.github.mashlol.DBContext;
 import com.github.mashlol.StockMarket;
 import com.github.mashlol.Stocks.PlayerStocks;
 
@@ -17,123 +17,107 @@ public class StockMarketDividendThread extends Thread {
 
 	private boolean loop = true;
 	private int loopTimes = 0;
+	private DBContext ctx = null;
 	
-	public StockMarketDividendThread () throws SQLException{
+	public StockMarketDividendThread () {
 		super ("StockMarketDividendThread");
 		
-		MySQL mysql = new MySQL();
-		Connection conn = mysql.getConn();
-		PreparedStatement s = conn.prepareStatement("SELECT looptime2 FROM looptime");
-		ResultSet result = s.executeQuery();
-		
+		ctx = new DBContext();
+		ResultSet result = null;
 		try {
-			while (result.next()) {
-				loopTimes = result.getInt("looptime2");
+			result = ctx.executeQueryRead("SELECT looptime2 FROM looptime");
+			if (result != null) {
+				while (result.next()) {
+					loopTimes = result.getInt("looptime2");
+				}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			if (result != null) {
+				ctx.close(result);
+			}
 		}
-		
-		conn.close();
 	}
 	
 	public void run() {
-		if (StockMarket.dividendFreq == 0)
-			loop = false;
-		while (loop) {
-			// SLEEP
-			try {
-				Thread.sleep(60000); // THIS DELAY COULD BE CONFIG'D
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+		try {
+			if (StockMarket.dividendFreq == 0)
+				loop = false;
 			
-			if (loop) {
+			while (loop) {
+				
+				// SLEEP
+				Thread.sleep(60000); // THIS DELAY COULD BE CONFIG'D
+			
+				if (!loop) break;
 				loopTimes++;
 	
 				// DO SOME EVENT STUFF
 				
-				if (loopTimes % StockMarket.dividendFreq == 0) {
-					broadcastMessage("Paying out all stock dividends");
-					
-					if (StockMarket.payOffline == true) {
-						MySQL mysql = new MySQL();
-						Connection conn = mysql.getConn();
-						try {
-							PreparedStatement s;
-							try {
-								s = conn.prepareStatement("SELECT name FROM players");
-								ResultSet result = s.executeQuery();
-								try {
-									while (result.next()) {
-										String playerName = result.getString("name");
-										Player p = Bukkit.getServer().getPlayer(playerName);
-										PlayerStocks ps;
-										if (p != null)
-											 ps = new PlayerStocks(p);
-										else
-											ps = new PlayerStocks(playerName);
-											ps.payoutDividends();
-									}
-								} catch (SQLException e) {
-									
-								}
-							} catch (SQLException e1) {
-								// TODO Auto-generated catch block
-								e1.printStackTrace();
-							}
-						} finally {
-							if (conn != null) {
-								try {
-									conn.close();
-								} catch (SQLException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
+				if (loopTimes % StockMarket.dividendFreq != 0) continue;
+				
+				loopTimes = 0;
+				broadcastMessage("Paying out all stock dividends");
+				
+				// If pay online
+				if (StockMarket.payOffline == false) {
+					// If not paying offline
+					Player[] players = Bukkit.getOnlinePlayers();
+	                //loop through all of the online players and give them all a random item and amount of something, The diamond ore breaker will not get a reward.
+	                for (Player player : players) {
+	                	PlayerStocks ps;
+						ps = PlayerStocks.LoadPlayer(ctx, Bukkit.getServer().getPlayer(player.getName()));
+						if (ps != null) {
+							ps.payoutDividends();
+						}
+	                }
+	                continue;
+				}
+
+				// If pay offline
+				ResultSet result = null;
+				try {
+					result = ctx.executeQueryRead("SELECT name FROM players");
+					if (result != null) {
+						while (result.next()) {
+							String playerName = result.getString("name");
+							Player p = Bukkit.getServer().getPlayer(playerName);
+							PlayerStocks ps;
+							if (p != null)
+								ps = PlayerStocks.LoadPlayer(ctx, p);
+							else
+								ps = PlayerStocks.LoadPlayer(ctx, playerName);
+							if (ps != null) {
+								ps.payoutDividends();
 							}
 						}
-						
-						
-						
-					} else {
-						Player[] players = Bukkit.getOnlinePlayers();
-		                //loop through all of the online players and give them all a random item and amount of something, The diamond ore breaker will not get a reward.
-		                for (Player player : players) {
-		                	PlayerStocks ps;
-							try {
-								ps = new PlayerStocks(Bukkit.getServer().getPlayer(player.getName()));
-								ps.payoutDividends();
-							} catch (SQLException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-		                }
-						
 					}
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				} finally {
+					ctx.close(result);
 				}
 			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			return;
 		}
 	}
 	
-	public void finish() throws SQLException {
+	public void finish() {
 		loop = false;
-		
-		MySQL mysql = new MySQL();
-		Connection conn = mysql.getConn();
+		this.interrupt();
 		try {
-			PreparedStatement s = conn.prepareStatement("UPDATE looptime SET looptime2 = " + loopTimes);
-			s.execute();
-			s.close();
-		} catch (SQLException e) {
-			
+			this.join(5000);
+		} catch (InterruptedException e) {
 		}
-		conn.close();
+		ctx.executeUpdate("UPDATE looptime SET looptime2 = " + loopTimes);
+		ctx.close();
 	}
 	
 	private void broadcastMessage (String message) {
 		if (StockMarket.broadcastPayouts)
 			Bukkit.getServer().broadcastMessage(ChatColor.WHITE + "[" + ChatColor.GOLD + "StockMarketPayday" + ChatColor.WHITE + "] " + ChatColor.DARK_GREEN + message);
 	}
-	
-	
 }
