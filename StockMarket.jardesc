@@ -14,8 +14,8 @@
         <javaElement handleIdentifier="=StockMarket/&lt;com.github.mashlol.Messages"/>
         <javaElement handleIdentifier="=StockMarket/&lt;com.github.mashlol.Events"/>
         <file path="/StockMarket/plugin.yml"/>
-        <javaElement handleIdentifier="=StockMarket/&lt;com.github.mashlol"/>
         <javaElement handleIdentifier="=StockMarket/&lt;com.github.mashlol.Threads"/>
+        <javaElement handleIdentifier="=StockMarket/&lt;com.github.mashlol"/>
         <javaElement handleIdentifier="=StockMarket/&lt;com.github.mashlol.Stocks"/>
     </selectedElements>
 </jardesc>
