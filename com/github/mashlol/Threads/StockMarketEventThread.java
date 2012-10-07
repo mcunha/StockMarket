@@ -23,8 +23,10 @@ public class StockMarketEventThread extends Thread {
 		ResultSet result = null;
 		try {
 			result = ctx.executeQueryRead("SELECT looptime FROM looptime");
-			while (result.next()) {
-				loopTimes = result.getInt("looptime");
+			if (result != null) {
+				while (result.next()) {
+					loopTimes = result.getInt("looptime");
+				}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();

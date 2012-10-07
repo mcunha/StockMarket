@@ -21,6 +21,7 @@ public class StockMarketDividendThread extends Thread {
 		super ("StockMarketDividendThread");
 		
 		ctx = new DBContext();
+		
 		ResultSet result = null;
 		try {
 			result = ctx.executeQueryRead("SELECT looptime2 FROM looptime");
