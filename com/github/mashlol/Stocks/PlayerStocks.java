@@ -121,12 +121,14 @@ public class PlayerStocks {
 	
 			
 			// PROCESS ROWS BY MOST PROFITABLE SALES ORDER
+			System.out.println("[STOCK DEBUG] Checking buy orders");
 			stmt = ctx.PrepareStatementRead("SELECT *, amount - amount_sold as qty_diff, ? - price as price_diff FROM player_stock_transactions WHERE player = ? AND amount_sold < amount AND trxn_type = 'Buy' AND stockID = ? ORDER BY price_diff DESC");
 			stmt.setDouble(1, stock.getPrice());
 			stmt.setString(2, player.getName());
 			stmt.setString(3, stock.getID());
 			result = ctx.executeQuery(stmt);
 			if (result != null) {
+				System.out.println("[STOCK DEBUG] Received sales orders");
 				while (result.next()) {
 					int sold_this_round = 0;
 					if (amount_selling > 0) {
@@ -146,16 +148,21 @@ public class PlayerStocks {
 						
 						// set amount_sold for these purchases
 						PreparedStatement stmt2 = null;
-						stmt2 = ctx.PrepareStatementWrite("UPDATE player_stock_transactions SET amount_sold = amount_sold + ? WHERE id = ?");
 						try {
+							stmt2 = ctx.PrepareStatementWrite("UPDATE player_stock_transactions SET amount_sold = amount_sold + ? WHERE id = ?");
 							stmt2.setInt(1, sold_this_round);
 							stmt2.setInt(2, result.getInt("id"));
-							if (!ctx.execute(stmt2)) return false;
+							System.out.println("[STOCK DEBUG] Updating amount sold for #" + result.getInt("id"));
+							if (!ctx.execute(stmt2)) {
+								System.out.println("[STOCK DEBUG] Failed to update amount sold for #" + result.getInt("id"));
+								return false;
+							}
 						
 							// The difference per stock
 							double buy_sell_diff = stock.getPrice() - result.getDouble("price");
 							
 							// STORE THE SELL PRICE TRANSACTION
+							System.out.println("[STOCK DEBUG] Registering sale transactions for #" + result.getInt("id"));
 							stmt2 = ctx.PrepareStatementWrite("" +
 								"INSERT INTO player_stock_transactions (player, stockID, trxn_type, price, amount, amount_sold, unit_difference, total_difference)" +
 								"VALUES (?, ?, 'Sell', ?, ?, 0, ?, ?)");
@@ -165,23 +172,33 @@ public class PlayerStocks {
 							stmt2.setInt(4, amount);
 							stmt2.setDouble(5, buy_sell_diff);
 							stmt2.setDouble(6, (buy_sell_diff * sold_this_round) );
-							if (!ctx.execute(stmt2)) return false;
+							if (!ctx.execute(stmt2)) {
+								System.out.println("[STOCK DEBUG] Failed to register sale transaction for #" + result.getInt("id"));
+								return false;
+							}
 						} finally {
+							System.out.println("[STOCK DEBUG] Closing stmt2");
 							ctx.close(stmt2);
 						}
 					}
 				}
+			} else {
+				System.out.println("[STOCK DEBUG] No stocks found for this player");
 			}
 		} catch (SQLException e) {
+			System.out.println("[STOCK DEBUG] Handling SQL Expception");
 			e.printStackTrace();
 			return false;
 		} finally {
+			System.out.println("[STOCK DEBUG] Closing result");
 			ctx.close(result);
+			System.out.println("[STOCK DEBUG] Closing stmt");
 			ctx.close(stmt);
 		}
 		
 		// UPDATE AMOUNT IF NOT INFINITE
 		if (stock.getAmount() != -1) {
+			System.out.println("[STOCK DEBUG] Updating free stocks");
 			try {
 				stmt = ctx.PrepareStatementWrite("UPDATE stocks SET amount = amount + ? WHERE StockID LIKE ?");
 				stmt.setInt(1, amount);
@@ -195,8 +212,10 @@ public class PlayerStocks {
 			}
 		}
 		
+		System.out.println("[STOCK DEBUG] Depositing player money");
 		StockMarket.economy.depositPlayer(player.getName(), amount * stock.getPrice());
 		m.successMessage("Successfully sold " + amount + " " + stock + " stocks for " + stock.getPrice() + " " + StockMarket.economy.currencyNamePlural() + " each.");
+		System.out.println("[STOCK DEBUG] Successfully sold " + amount + " " + stock + " stocks for " + stock.getPrice() + " " + StockMarket.economy.currencyNamePlural() + " each.");
 		return true;
 	}
 	
