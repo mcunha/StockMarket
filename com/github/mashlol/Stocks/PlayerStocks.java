@@ -111,6 +111,7 @@ public class PlayerStocks {
 		PreparedStatement stmt = null;
 		ResultSet result = null;
 		try {
+			System.out.println("[STOCK DEBUG] Updating players stock amount");
 			stmt = ctx.PrepareStatementWrite("UPDATE players SET " + stock.getID() + " = ? WHERE name LIKE ?");
 			stmt.setInt(1, this.stock.get(stock.getID()).amount);
 			stmt.setString(2, player.getName());
@@ -203,11 +204,16 @@ public class PlayerStocks {
 				stmt = ctx.PrepareStatementWrite("UPDATE stocks SET amount = amount + ? WHERE StockID LIKE ?");
 				stmt.setInt(1, amount);
 				stmt.setString(2, stock.getID());
-				if (!ctx.execute(stmt)) return false;
+				if (!ctx.execute(stmt)) {
+					System.out.println("[STOCK DEBUG] Failed to update free stocks");
+					return false;
+				}
 			} catch (SQLException e) {
+				System.out.println("[STOCK DEBUG] Handling free stocks SQL Expception");
 				e.printStackTrace();
 				return false;
 			} finally {
+				System.out.println("[STOCK DEBUG] Closing free stocks stmt");
 				ctx.close(stmt);
 			}
 		}
