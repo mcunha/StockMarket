@@ -55,17 +55,14 @@ public class DBContext {
 		Connection con = null;
 		try {
 			con = statm.getConnection();
-		} catch (SQLException e1) {
-			e1.printStackTrace();
-			return false;
-		}
-		try {
-			try {
-				res = statm.execute();
-			} catch (SQLException e) {
-				e.printStackTrace();
-				return false;
+
+			res = statm.execute();
+			
+			if (!res) {
+				res = (statm.getUpdateCount() != 0);
 			}
+		} catch (SQLException e) {
+			e.printStackTrace();
 		} finally {
 			try {
 				statm.close();
