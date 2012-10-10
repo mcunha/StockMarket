@@ -122,14 +122,12 @@ public class PlayerStocks {
 	
 			
 			// PROCESS ROWS BY MOST PROFITABLE SALES ORDER
-			System.out.println("[STOCK DEBUG] Checking buy orders");
 			stmt = ctx.PrepareStatementRead("SELECT *, amount - amount_sold as qty_diff, ? - price as price_diff FROM player_stock_transactions WHERE player = ? AND amount_sold < amount AND trxn_type = 'Buy' AND stockID = ? ORDER BY price_diff DESC");
 			stmt.setDouble(1, stock.getPrice());
 			stmt.setString(2, player.getName());
 			stmt.setString(3, stock.getID());
 			result = ctx.executeQuery(stmt);
 			if (result != null) {
-				System.out.println("[STOCK DEBUG] Received sales orders");
 				while (result.next()) {
 					int sold_this_round = 0;
 					if (amount_selling > 0) {
@@ -153,7 +151,6 @@ public class PlayerStocks {
 							stmt2 = ctx.PrepareStatementWrite("UPDATE player_stock_transactions SET amount_sold = amount_sold + ? WHERE id = ?");
 							stmt2.setInt(1, sold_this_round);
 							stmt2.setInt(2, result.getInt("id"));
-							System.out.println("[STOCK DEBUG] Updating amount sold for #" + result.getInt("id"));
 							if (!ctx.execute(stmt2)) {
 								System.out.println("[STOCK DEBUG] Failed to update amount sold for #" + result.getInt("id"));
 								return false;
@@ -178,7 +175,6 @@ public class PlayerStocks {
 								return false;
 							}
 						} finally {
-							System.out.println("[STOCK DEBUG] Closing stmt2");
 							ctx.close(stmt2);
 						}
 					}
@@ -191,15 +187,12 @@ public class PlayerStocks {
 			e.printStackTrace();
 			return false;
 		} finally {
-			System.out.println("[STOCK DEBUG] Closing result");
 			ctx.close(result);
-			System.out.println("[STOCK DEBUG] Closing stmt");
 			ctx.close(stmt);
 		}
 		
 		// UPDATE AMOUNT IF NOT INFINITE
 		if (stock.getAmount() != -1) {
-			System.out.println("[STOCK DEBUG] Updating free stocks");
 			try {
 				stmt = ctx.PrepareStatementWrite("UPDATE stocks SET amount = amount + ? WHERE StockID LIKE ?");
 				stmt.setInt(1, amount);
@@ -213,12 +206,10 @@ public class PlayerStocks {
 				e.printStackTrace();
 				return false;
 			} finally {
-				System.out.println("[STOCK DEBUG] Closing free stocks stmt");
 				ctx.close(stmt);
 			}
 		}
 		
-		System.out.println("[STOCK DEBUG] Depositing player money");
 		StockMarket.economy.depositPlayer(player.getName(), amount * stock.getPrice());
 		m.successMessage("Successfully sold " + amount + " " + stock + " stocks for " + stock.getPrice() + " " + StockMarket.economy.currencyNamePlural() + " each.");
 		System.out.println("[STOCK DEBUG] Successfully sold " + amount + " " + stock + " stocks for " + stock.getPrice() + " " + StockMarket.economy.currencyNamePlural() + " each.");
