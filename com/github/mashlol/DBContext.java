@@ -162,11 +162,7 @@ public class DBContext {
 		Connection con = null;
 		try {
 			con = statm.getConnection();
-		} catch (SQLException e1) {
-			e1.printStackTrace();
-			return 0;
-		}
-		try {
+
 			res = statm.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
